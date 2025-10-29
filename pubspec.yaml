@@ -41,6 +41,9 @@ dependencies:
   # Navegación
   go_router: ^14.2.7
   
+  # Calendario para panel de médico
+  table_calendar: ^3.0.9
+  
   # Manejo de archivos
   file_picker: ^8.0.0+1
   

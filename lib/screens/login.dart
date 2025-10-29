@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/supabase_service.dart';
+import '../services/session_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,7 +16,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _epsController = TextEditingController();
 
   bool _isLoading = false;
-  bool _obscureEps = true;
 
   @override
   void dispose() {
@@ -46,8 +46,9 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
 
-          // Redirigir a la pantalla de bienvenida
-          context.go('/bienvenida');
+          // Redirigir según rol: superusuario va al panel del médico
+          final isSuper = SessionService.instance.isSuperUser;
+          context.go(isSuper ? '/medico-panel' : '/bienvenida');
         }
       } else {
         if (mounted) {
@@ -156,23 +157,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(
                   labelText: 'EPS',
                   prefixIcon: const Icon(Icons.local_hospital),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureEps ? Icons.visibility : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscureEps = !_obscureEps;
-                      });
-                    },
-                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
                   fillColor: Colors.white,
                 ),
-                obscureText: _obscureEps,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Por favor ingrese su EPS';

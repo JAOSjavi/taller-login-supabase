@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:intl/intl.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -89,6 +88,25 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                     Text(
                       'Complete todos los campos para agendar su cita',
                       style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Horarios de atención: 8:00 AM - 6:00 PM',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.blue[800],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -385,6 +403,32 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
 
   Future<void> _seleccionarArchivo() async {
     try {
+      // Mostrar opciones para el emulador
+      if (!kIsWeb) {
+        final opcion = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Seleccionar Archivo'),
+            content: const Text('¿Cómo desea proceder?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('picker'),
+                child: const Text('Buscar archivo'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('demo'),
+                child: const Text('Usar PDF de prueba'),
+              ),
+            ],
+          ),
+        );
+
+        if (opcion == 'demo') {
+          _usarPDFDePrueba();
+          return;
+        }
+      }
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
@@ -419,6 +463,21 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
     }
   }
 
+  void _usarPDFDePrueba() {
+    setState(() {
+      _nombreArchivo = 'historia_clinica_prueba.pdf';
+      _archivoPDF = null;
+      _archivoBytes = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ PDF de prueba seleccionado para testing'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   Future<void> _confirmarCita() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -442,7 +501,9 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
       return;
     }
 
-    if (_archivoPDF == null && _archivoBytes == null) {
+    if (_archivoPDF == null &&
+        _archivoBytes == null &&
+        _nombreArchivo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor seleccione un archivo PDF'),
@@ -463,12 +524,56 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
         throw Exception('No se pudo obtener la información del usuario');
       }
 
+      // Crear fecha a partir de los campos
+      final fecha = DateTime(
+        int.parse(_ano!),
+        int.parse(_mes!),
+        int.parse(_dia!),
+      );
+
+      // Validar que la fecha no sea en el pasado
+      final ahora = DateTime.now();
+      if (fecha.isBefore(DateTime(ahora.year, ahora.month, ahora.day))) {
+        throw Exception('No se pueden agendar citas en fechas pasadas');
+      }
+
+      // Validar horario de atención (8:00 AM - 6:00 PM)
+      final horaCita = _hora!.hour;
+      if (horaCita < 8 || horaCita >= 18) {
+        throw Exception('Los horarios de atención son de 8:00 AM a 6:00 PM');
+      }
+
+      // Verificar disponibilidad del doctor en esa fecha y hora
+      final horaFormateada =
+          '${_hora!.hour.toString().padLeft(2, '0')}:${_hora!.minute.toString().padLeft(2, '0')}';
+      final disponible = await SupabaseService.instance.verificarDisponibilidad(
+        doctor: _doctor!,
+        fecha: fecha,
+        hora: horaFormateada,
+      );
+
+      if (!disponible) {
+        throw Exception(
+          'El doctor ${_doctor!} no está disponible en esa fecha y hora. Por favor seleccione otro horario.',
+        );
+      }
+
       // Subir archivo PDF
       final nombreArchivo =
           '${usuarioData['id']}_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       Map<String, dynamic> resultadoArchivo;
-      if (kIsWeb && _archivoBytes != null) {
+
+      // Si es PDF de prueba, crear URL ficticia
+      if (_nombreArchivo == 'historia_clinica_prueba.pdf' &&
+          _archivoPDF == null &&
+          _archivoBytes == null) {
+        resultadoArchivo = {
+          'success': true,
+          'url': 'https://ejemplo.com/pdf_prueba.pdf',
+          'message': 'PDF de prueba simulado',
+        };
+      } else if (kIsWeb && _archivoBytes != null) {
         // Para web, usar bytes directamente
         resultadoArchivo = await SupabaseService.instance.subirArchivoBytes(
           bytes: _archivoBytes!,
@@ -486,21 +591,13 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
         throw Exception(resultadoArchivo['message']);
       }
 
-      // Crear fecha a partir de los campos
-      final fecha = DateTime(
-        int.parse(_ano!),
-        int.parse(_mes!),
-        int.parse(_dia!),
-      );
-
       // Agendar cita
       final resultadoCita = await SupabaseService.instance.agendarCita(
         usuarioId: usuarioData['id'],
         tipoCita: _tipoCita!,
         doctor: _doctor!,
         fecha: fecha,
-        hora:
-            '${_hora!.hour.toString().padLeft(2, '0')}:${_hora!.minute.toString().padLeft(2, '0')}',
+        hora: horaFormateada,
         pdfUrl: resultadoArchivo['url'],
       );
 
@@ -513,8 +610,8 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
             ),
           );
 
-          // Redirigir a la pantalla de bienvenida
-          context.go('/bienvenida');
+          // Redirigir a la pantalla de mis citas
+          context.go('/mis-citas');
         }
       } else {
         throw Exception(resultadoCita['message']);

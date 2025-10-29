@@ -184,26 +184,61 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
               const SizedBox(height: 24),
             ],
 
-            // Botón principal
-            ElevatedButton.icon(
-              onPressed: () => context.go('/agendar-cita'),
-              icon: const Icon(Icons.calendar_today, size: 24),
-              label: const Text(
-                'Agende su cita médica',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[600],
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 20,
-                  horizontal: 24,
+            // Botones principales
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.go('/agendar-cita'),
+                    icon: const Icon(Icons.calendar_today, size: 20),
+                    label: const Text(
+                      'Agendar Cita',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[600],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 3,
+                    ),
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.go('/mis-citas'),
+                    icon: const Icon(Icons.list_alt, size: 20),
+                    label: const Text(
+                      'Mis Citas',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[600],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 3,
+                    ),
+                  ),
                 ),
-                elevation: 3,
-              ),
+              ],
             ),
 
             const SizedBox(height: 24),

@@ -3,6 +3,9 @@ import 'screens/registro.dart';
 import 'screens/login.dart';
 import 'screens/bienvenida.dart';
 import 'screens/agendar_cita.dart';
+import 'screens/mis_citas.dart';
+import 'screens/editar_cita.dart';
+import 'screens/medico_panel.dart';
 import 'services/supabase_service.dart';
 
 class AppRouter {
@@ -28,6 +31,24 @@ class AppRouter {
         path: '/agendar-cita',
         name: 'agendar-cita',
         builder: (context, state) => const AgendarCitaScreen(),
+      ),
+      GoRoute(
+        path: '/mis-citas',
+        name: 'mis-citas',
+        builder: (context, state) => const MisCitasScreen(),
+      ),
+      GoRoute(
+        path: '/editar-cita/:citaId',
+        name: 'editar-cita',
+        builder: (context, state) {
+          final citaId = state.pathParameters['citaId']!;
+          return EditarCitaScreen(citaId: citaId);
+        },
+      ),
+      GoRoute(
+        path: '/medico-panel',
+        name: 'medico-panel',
+        builder: (context, state) => const MedicoPanelScreen(),
       ),
     ],
     redirect: (context, state) {
