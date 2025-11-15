@@ -166,7 +166,11 @@ class SupabaseService {
 
       final response = await _client.storage
           .from('bucket1')
-          .uploadBinary(nombreArchivo, bytes);
+          .uploadBinary(
+            nombreArchivo,
+            bytes,
+            fileOptions: const FileOptions(contentType: 'application/pdf'),
+          );
 
       // Obtener URL pública
       final publicUrl = _client.storage
@@ -195,7 +199,11 @@ class SupabaseService {
     try {
       final response = await _client.storage
           .from('bucket1')
-          .uploadBinary(nombreArchivo, bytes);
+          .uploadBinary(
+            nombreArchivo,
+            bytes,
+            fileOptions: const FileOptions(contentType: 'application/pdf'),
+          );
 
       // Obtener URL pública
       final publicUrl = _client.storage

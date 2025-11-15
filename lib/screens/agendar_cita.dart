@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 import '../services/supabase_service.dart';
 
 class AgendarCitaScreen extends StatefulWidget {
@@ -295,32 +297,34 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: _archivoPDF != null
+                    color: _nombreArchivo != null
                         ? Colors.green
                         : Colors.grey[300]!,
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(12),
-                  color: _archivoPDF != null ? Colors.green[50] : Colors.white,
+                  color: _nombreArchivo != null
+                      ? Colors.green[50]
+                      : Colors.white,
                 ),
                 child: Column(
                   children: [
                     Icon(
                       Icons.upload_file,
                       size: 32,
-                      color: _archivoPDF != null
+                      color: _nombreArchivo != null
                           ? Colors.green[600]
                           : Colors.grey[600],
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _archivoPDF != null
+                      _nombreArchivo != null
                           ? 'Archivo seleccionado: $_nombreArchivo'
                           : 'Subir historia clínica (PDF)',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: _archivoPDF != null
+                        color: _nombreArchivo != null
                             ? Colors.green[700]
                             : Colors.grey[700],
                       ),
@@ -330,14 +334,27 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                       onPressed: _seleccionarArchivo,
                       icon: const Icon(Icons.attach_file),
                       label: Text(
-                        _archivoPDF != null
+                        _nombreArchivo != null
                             ? 'Cambiar archivo'
                             : 'Seleccionar archivo',
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _archivoPDF != null
+                        backgroundColor: _nombreArchivo != null
                             ? Colors.orange[600]
                             : Colors.blue[600],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      onPressed: _seleccionarEjemplo,
+                      icon: const Icon(Icons.library_books),
+                      label: const Text('Elegir historia de ejemplo'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal[600],
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -416,6 +433,10 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                 child: const Text('Buscar archivo'),
               ),
               TextButton(
+                onPressed: () => Navigator.of(context).pop('downloads'),
+                child: const Text('Cargar desde Downloads'),
+              ),
+              TextButton(
                 onPressed: () => Navigator.of(context).pop('demo'),
                 child: const Text('Usar PDF de prueba'),
               ),
@@ -427,29 +448,54 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
           _usarPDFDePrueba();
           return;
         }
+
+        if (opcion == 'downloads') {
+          await _cargarDesdeDownloads();
+          return;
+        }
       }
 
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
         allowMultiple: false,
-        withData: kIsWeb, // Importante para obtener los bytes en web
+        withData: true,
       );
 
       if (result != null) {
-        setState(() {
-          if (kIsWeb) {
-            // Para web, guardamos los bytes y el nombre
-            _archivoPDF = null;
-            _archivoBytes = result.files.single.bytes;
-            _nombreArchivo = result.files.single.name;
-          } else {
-            // Para móvil, usamos File normalmente
-            _archivoPDF = File(result.files.single.path!);
-            _archivoBytes = null;
-            _nombreArchivo = result.files.single.name;
+        final file = result.files.single;
+        Uint8List? pickedBytes = file.bytes;
+        if (pickedBytes == null && file.readStream != null) {
+          final readStream = file.readStream;
+          if (readStream != null) {
+            final builder = BytesBuilder();
+            await for (final chunk in readStream) {
+              builder.add(chunk);
+            }
+            pickedBytes = builder.takeBytes();
           }
+        }
+        if (pickedBytes == null && file.path != null) {
+          try {
+            final filePath = file.path;
+            if (filePath != null) {
+              pickedBytes = await File(filePath).readAsBytes();
+            }
+          } catch (_) {}
+        }
+        setState(() {
+          _archivoBytes = pickedBytes;
+          _archivoPDF = null;
+          _nombreArchivo = pickedBytes != null ? file.name : null;
         });
+        if (_archivoBytes == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo leer el archivo seleccionado'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -478,8 +524,226 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
     );
   }
 
+  Future<void> _cargarDesdeDownloads() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Nombre del archivo que buscamos
+      const nombreArchivo = 'historia clinica 1.pdf';
+
+      // Lista de rutas posibles para Downloads en Android
+      final rutasPosibles = <String>[];
+
+      // Intentar obtener el directorio de Downloads usando path_provider
+      try {
+        if (Platform.isAndroid) {
+          // Para Android, intentar diferentes métodos
+          final directory = await getExternalStorageDirectory();
+          if (directory != null) {
+            try {
+              // Obtener el directorio padre y luego ir a Download
+              // En Android, el directorio externo suele estar en /storage/emulated/0/
+              final parent = directory.parent;
+              if (parent != null) {
+                final grandParent = parent.parent;
+                if (grandParent != null) {
+                  final downloadsPath = '${grandParent.path}/Download';
+                  rutasPosibles.add(downloadsPath);
+                }
+              }
+            } catch (e) {
+              print('Error al construir ruta desde directory: $e');
+            }
+          }
+
+          // Rutas comunes en Android
+          rutasPosibles.add('/storage/emulated/0/Download');
+          rutasPosibles.add('/sdcard/Download');
+          rutasPosibles.add('/storage/sdcard0/Download');
+        } else if (Platform.isIOS) {
+          // Para iOS, usar el directorio de documentos
+          final directory = await getApplicationDocumentsDirectory();
+          rutasPosibles.add(directory.path);
+        }
+      } catch (e) {
+        print('Error al obtener directorio: $e');
+      }
+
+      File? archivoEncontrado;
+      String? rutaEncontrada;
+
+      // Buscar el archivo en las rutas posibles
+      for (final ruta in rutasPosibles) {
+        try {
+          final archivo = File('$ruta/$nombreArchivo');
+          if (await archivo.exists()) {
+            archivoEncontrado = archivo;
+            rutaEncontrada = ruta;
+            break;
+          }
+        } catch (e) {
+          print('Error al verificar ruta $ruta: $e');
+        }
+      }
+
+      if (archivoEncontrado != null) {
+        // Leer el archivo
+        final bytes = await archivoEncontrado.readAsBytes();
+
+        setState(() {
+          _archivoBytes = bytes;
+          _archivoPDF = archivoEncontrado;
+          _nombreArchivo = nombreArchivo;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Archivo cargado: $nombreArchivo\nDesde: $rutaEncontrada',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        // Si no se encuentra, mostrar un mensaje con las rutas intentadas
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'No se encontró el archivo "$nombreArchivo" en Downloads.\n'
+                'Rutas verificadas: ${rutasPosibles.join(", ")}\n'
+                'Por favor, use "Buscar archivo" para seleccionarlo manualmente.',
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 6),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar desde Downloads: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _seleccionarEjemplo() async {
+    try {
+      final opcion = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Historias clínicas de ejemplo'),
+          content: const Text('Seleccione una historia clínica de ejemplo'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop('historia1'),
+              child: const Text('Historia clínica 1'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop('historia2'),
+              child: const Text('Historia clínica 2'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop('historia3'),
+              child: const Text('Historia clínica 3'),
+            ),
+          ],
+        ),
+      );
+
+      if (opcion != null) {
+        await _cargarEjemplo(opcion);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar ejemplo: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _cargarEjemplo(String id) async {
+    final urls = {
+      'historia1':
+          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+      'historia2':
+          'https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf',
+      'historia3': 'https://gahp.net/wp-content/uploads/2017/09/sample.pdf',
+    };
+    final nombres = {
+      'historia1': 'historia_clinica_1.pdf',
+      'historia2': 'historia_clinica_2.pdf',
+      'historia3': 'historia_clinica_3.pdf',
+    };
+
+    final url = urls[id];
+    final nombre = nombres[id];
+    if (url == null || nombre == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final resp = await http.get(Uri.parse(url));
+      if (resp.statusCode == 200) {
+        setState(() {
+          _archivoBytes = resp.bodyBytes;
+          _archivoPDF = null;
+          _nombreArchivo = nombre;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Historia clínica de ejemplo seleccionada'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        throw Exception('No se pudo descargar el ejemplo (${resp.statusCode})');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar ejemplo: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   Future<void> _confirmarCita() async {
-    if (!_formKey.currentState!.validate()) return;
+    final formState = _formKey.currentState;
+    if (formState == null || !formState.validate()) return;
 
     if (_dia == null || _mes == null || _ano == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -501,9 +765,27 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
       return;
     }
 
-    if (_archivoPDF == null &&
-        _archivoBytes == null &&
-        _nombreArchivo == null) {
+    if (_tipoCita == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor seleccione un tipo de cita'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_doctor == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor seleccione un doctor'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_archivoBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor seleccione un archivo PDF'),
@@ -523,13 +805,20 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
       if (usuarioData == null) {
         throw Exception('No se pudo obtener la información del usuario');
       }
+      
+      // Verificar que el usuario tiene todos los datos necesarios
+      if (!usuarioData.containsKey('id')) {
+        throw Exception('El usuario no tiene un ID válido. Por favor, inicie sesión nuevamente.');
+      }
 
-      // Crear fecha a partir de los campos
-      final fecha = DateTime(
-        int.parse(_ano!),
-        int.parse(_mes!),
-        int.parse(_dia!),
-      );
+      // Crear fecha a partir de los campos de texto de forma segura
+      final ano = int.tryParse(_ano ?? '');
+      final mes = int.tryParse(_mes ?? '');
+      final dia = int.tryParse(_dia ?? '');
+      if (ano == null || mes == null || dia == null) {
+        throw Exception('Fecha inválida, verifique día/mes/año');
+      }
+      final fecha = DateTime(ano, mes, dia);
 
       // Validar que la fecha no sea en el pasado
       final ahora = DateTime.now();
@@ -538,29 +827,41 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
       }
 
       // Validar horario de atención (8:00 AM - 6:00 PM)
-      final horaCita = _hora!.hour;
+      final horaSel = _hora;
+      if (horaSel == null) {
+        throw Exception('Por favor seleccione una hora');
+      }
+      final horaCita = horaSel.hour;
       if (horaCita < 8 || horaCita >= 18) {
         throw Exception('Los horarios de atención son de 8:00 AM a 6:00 PM');
       }
 
       // Verificar disponibilidad del doctor en esa fecha y hora
       final horaFormateada =
-          '${_hora!.hour.toString().padLeft(2, '0')}:${_hora!.minute.toString().padLeft(2, '0')}';
+          '${horaSel.hour.toString().padLeft(2, '0')}:${horaSel.minute.toString().padLeft(2, '0')}';
+      final doctorSel = _doctor;
+      if (doctorSel == null || doctorSel.isEmpty) {
+        throw Exception('Por favor seleccione un doctor');
+      }
       final disponible = await SupabaseService.instance.verificarDisponibilidad(
-        doctor: _doctor!,
+        doctor: doctorSel,
         fecha: fecha,
         hora: horaFormateada,
       );
 
       if (!disponible) {
         throw Exception(
-          'El doctor ${_doctor!} no está disponible en esa fecha y hora. Por favor seleccione otro horario.',
+          'El doctor $doctorSel no está disponible en esa fecha y hora. Por favor seleccione otro horario.',
         );
       }
 
       // Subir archivo PDF
+      final usuarioId = usuarioData['id'] as String?;
+      if (usuarioId == null || usuarioId.isEmpty) {
+        throw Exception('No se pudo obtener el ID del usuario');
+      }
       final nombreArchivo =
-          '${usuarioData['id']}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+          '${usuarioId}_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       Map<String, dynamic> resultadoArchivo;
 
@@ -573,35 +874,50 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
           'url': 'https://ejemplo.com/pdf_prueba.pdf',
           'message': 'PDF de prueba simulado',
         };
-      } else if (kIsWeb && _archivoBytes != null) {
-        // Para web, usar bytes directamente
-        resultadoArchivo = await SupabaseService.instance.subirArchivoBytes(
-          bytes: _archivoBytes!,
-          nombreArchivo: nombreArchivo,
-        );
+      } else if (_archivoBytes != null) {
+        if (kIsWeb) {
+          resultadoArchivo = await SupabaseService.instance.subirArchivoBytes(
+            bytes: _archivoBytes!,
+            nombreArchivo: nombreArchivo,
+          );
+        } else {
+          final tmpDir = await getTemporaryDirectory();
+          final tmpFile = File('${tmpDir.path}/$nombreArchivo');
+          await tmpFile.writeAsBytes(_archivoBytes!, flush: true);
+          resultadoArchivo = await SupabaseService.instance.subirArchivoPDF(
+            archivo: tmpFile,
+            nombreArchivo: nombreArchivo,
+          );
+        }
       } else {
-        // Para móvil, usar archivo
-        resultadoArchivo = await SupabaseService.instance.subirArchivoPDF(
-          archivo: _archivoPDF!,
-          nombreArchivo: nombreArchivo,
-        );
+        throw Exception('No se encontró archivo válido para subir');
       }
 
       if (!resultadoArchivo['success']) {
-        throw Exception(resultadoArchivo['message']);
+        throw Exception(resultadoArchivo['message'] ?? 'Error desconocido al subir archivo');
+      }
+
+      // Verificar que la URL existe
+      final pdfUrl = resultadoArchivo['url'] as String?;
+      if (pdfUrl == null || pdfUrl.isEmpty) {
+        throw Exception('No se pudo obtener la URL del archivo subido');
       }
 
       // Agendar cita
+      final tipoSel = _tipoCita;
+      if (tipoSel == null || tipoSel.isEmpty) {
+        throw Exception('Por favor seleccione un tipo de cita');
+      }
       final resultadoCita = await SupabaseService.instance.agendarCita(
-        usuarioId: usuarioData['id'],
-        tipoCita: _tipoCita!,
-        doctor: _doctor!,
+        usuarioId: usuarioId,
+        tipoCita: tipoSel,
+        doctor: doctorSel,
         fecha: fecha,
         hora: horaFormateada,
-        pdfUrl: resultadoArchivo['url'],
+        pdfUrl: pdfUrl,
       );
 
-      if (resultadoCita['success']) {
+      if (resultadoCita['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -614,7 +930,8 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
           context.go('/mis-citas');
         }
       } else {
-        throw Exception(resultadoCita['message']);
+        final errorMessage = resultadoCita['message'] as String?;
+        throw Exception(errorMessage ?? 'Error desconocido al agendar la cita');
       }
     } catch (e) {
       if (mounted) {
