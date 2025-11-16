@@ -436,24 +436,29 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
 
         // Filtro de doctor
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Row(
             children: [
-              Expanded(
+              Flexible(
+                flex: 3,
                 child: TextField(
                   controller: _doctorController,
                   decoration: InputDecoration(
                     labelText: 'Filtrar por médico',
-                    hintText: 'Dejar vacío para ver todas las citas',
+                    hintText: 'Dejar vacío para ver todas',
                     prefixIcon: const Icon(Icons.medical_services),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
                     fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                     suffixIcon: _doctorController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear),
+                            icon: const Icon(Icons.clear, size: 20),
                             onPressed: () {
                               _doctorController.clear();
                               _loadMonth();
@@ -469,33 +474,36 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                   },
                 ),
               ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: _loading
-                    ? null
-                    : () {
-                        _loadMonth();
-                        _loadTodasLasCitas();
-                      },
-                icon: _loading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+              const SizedBox(width: 8),
+              Flexible(
+                flex: 1,
+                child: ElevatedButton.icon(
+                  onPressed: _loading
+                      ? null
+                      : () {
+                          _loadMonth();
+                          _loadTodasLasCitas();
+                        },
+                  icon: _loading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
-                        ),
-                      )
-                    : const Icon(Icons.search),
-                label: const Text('Buscar'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[600],
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
+                        )
+                      : const Icon(Icons.search, size: 20),
+                  label: const Text('Buscar', style: TextStyle(fontSize: 14)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[600],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                   ),
                 ),
               ),
@@ -503,15 +511,15 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
           ),
         ),
 
-        // Calendario y lista
+        // Calendario y lista - Layout vertical
         Expanded(
-          child: Row(
-            children: [
-              // Calendario
-              Expanded(
-                flex: 2,
-                child: Container(
-                  margin: const EdgeInsets.only(left: 16, right: 8),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              children: [
+                // Calendario arriba
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -523,99 +531,104 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                       ),
                     ],
                   ),
-                  child: TableCalendar(
-                    firstDay: DateTime.utc(2020, 1, 1),
-                    lastDay: DateTime.utc(2035, 12, 31),
-                    focusedDay: _focusedDay,
-                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                    calendarFormat: _calendarFormat,
-                    eventLoader: _getEventsForDay,
-                    startingDayOfWeek: StartingDayOfWeek.monday,
-                    calendarStyle: CalendarStyle(
-                      outsideDaysVisible: false,
-                      weekendTextStyle: TextStyle(color: Colors.red[700]),
-                      selectedDecoration: BoxDecoration(
-                        color: Colors.blue[600],
-                        shape: BoxShape.circle,
-                      ),
-                      selectedTextStyle: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      todayDecoration: BoxDecoration(
-                        color: Colors.blue[200],
-                        shape: BoxShape.circle,
-                      ),
-                      todayTextStyle: TextStyle(
-                        color: Colors.blue[900],
-                        fontWeight: FontWeight.bold,
-                      ),
-                      markerDecoration: BoxDecoration(
-                        color: Colors.green[600],
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    headerStyle: HeaderStyle(
-                      formatButtonVisible: true,
-                      titleCentered: true,
-                      formatButtonShowsNext: false,
-                      formatButtonDecoration: BoxDecoration(
-                        color: Colors.blue[600],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      formatButtonTextStyle: const TextStyle(
-                        color: Colors.white,
-                      ),
-                    ),
-                    onDaySelected: (selectedDay, focusedDay) {
-                      setState(() {
-                        _selectedDay = selectedDay;
-                        _focusedDay = focusedDay;
-                      });
-                    },
-                    onPageChanged: (focusedDay) {
-                      _focusedDay = focusedDay;
-                      _loadMonth();
-                    },
-                    onFormatChanged: (format) {
-                      setState(() => _calendarFormat = format);
-                    },
-                    calendarBuilders: CalendarBuilders(
-                      markerBuilder: (context, date, events) {
-                        if (events.isNotEmpty) {
-                          return Positioned(
-                            bottom: 1,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                events.length > 3 ? 3 : events.length,
-                                (index) => Container(
-                                  width: 6,
-                                  height: 6,
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 1,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green[600],
-                                    shape: BoxShape.circle,
+                  padding: const EdgeInsets.all(8),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return TableCalendar(
+                        firstDay: DateTime.utc(2020, 1, 1),
+                        lastDay: DateTime.utc(2035, 12, 31),
+                        focusedDay: _focusedDay,
+                        selectedDayPredicate: (day) =>
+                            isSameDay(_selectedDay, day),
+                        calendarFormat: CalendarFormat.month,
+                        eventLoader: _getEventsForDay,
+                        startingDayOfWeek: StartingDayOfWeek.monday,
+                        calendarStyle: CalendarStyle(
+                          outsideDaysVisible: false,
+                          weekendTextStyle: TextStyle(color: Colors.red[700]),
+                          selectedDecoration: BoxDecoration(
+                            color: Colors.blue[600],
+                            shape: BoxShape.circle,
+                          ),
+                          selectedTextStyle: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          todayDecoration: BoxDecoration(
+                            color: Colors.blue[200],
+                            shape: BoxShape.circle,
+                          ),
+                          todayTextStyle: TextStyle(
+                            color: Colors.blue[900],
+                            fontWeight: FontWeight.bold,
+                          ),
+                          markerDecoration: BoxDecoration(
+                            color: Colors.green[600],
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        headerStyle: HeaderStyle(
+                          formatButtonVisible: false,
+                          titleCentered: true,
+                          formatButtonShowsNext: false,
+                          leftChevronIcon: Icon(
+                            Icons.chevron_left,
+                            color: Colors.blue[600],
+                          ),
+                          rightChevronIcon: Icon(
+                            Icons.chevron_right,
+                            color: Colors.blue[600],
+                          ),
+                          titleTextStyle: TextStyle(
+                            color: Colors.blue[800],
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onDaySelected: (selectedDay, focusedDay) {
+                          setState(() {
+                            _selectedDay = selectedDay;
+                            _focusedDay = focusedDay;
+                          });
+                        },
+                        onPageChanged: (focusedDay) {
+                          _focusedDay = focusedDay;
+                          _loadMonth();
+                        },
+                        calendarBuilders: CalendarBuilders(
+                          markerBuilder: (context, date, events) {
+                            if (events.isNotEmpty) {
+                              return Positioned(
+                                bottom: 1,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    events.length > 3 ? 3 : events.length,
+                                    (index) => Container(
+                                      width: 6,
+                                      height: 6,
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[600],
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ),
 
-              // Lista de citas
-              Expanded(
-                flex: 3,
-                child: Container(
-                  margin: const EdgeInsets.only(left: 8, right: 16),
+                // Lista de citas abajo
+                Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -642,17 +655,19 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                           children: [
                             const Icon(Icons.event, color: Colors.blue),
                             const SizedBox(width: 8),
-                            Text(
-                              _selectedDay != null
-                                  ? 'Citas del ${DateFormat('dd/MM/yyyy').format(_selectedDay!)}'
-                                  : 'Seleccione un día',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[800],
+                            Expanded(
+                              child: Text(
+                                _selectedDay != null
+                                    ? 'Citas del ${DateFormat('dd/MM/yyyy').format(_selectedDay!)}'
+                                    : 'Seleccione un día en el calendario',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue[800],
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const Spacer(),
                             if (_selectedDay != null)
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -674,16 +689,23 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                           ],
                         ),
                       ),
-                      Expanded(
+                      SizedBox(
+                        height: 300,
                         child: _loading
-                            ? const Center(child: CircularProgressIndicator())
+                            ? const Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
                             : _buildDayList(),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ],
