@@ -267,6 +267,33 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
               const SizedBox(height: 16),
 
+              // Acceso al Panel del Médico
+              ElevatedButton.icon(
+                onPressed: () => context.go('/medico-panel'),
+                icon: const Icon(Icons.medical_information),
+                label: const Text(
+                  'Panel del Médico',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple[600],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Requiere credenciales de médico para acceso.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
+
+              const SizedBox(height: 16),
+
               // Enlace a Login
               TextButton(
                 onPressed: () => context.go('/login'),

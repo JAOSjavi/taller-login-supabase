@@ -6,6 +6,8 @@ import 'screens/agendar_cita.dart';
 import 'screens/mis_citas.dart';
 import 'screens/editar_cita.dart';
 import 'screens/medico_panel.dart';
+import 'screens/doctor_panel_screen.dart';
+import 'screens/detalle_cita_medico.dart';
 import 'services/supabase_service.dart';
 
 class AppRouter {
@@ -49,6 +51,19 @@ class AppRouter {
         path: '/medico-panel',
         name: 'medico-panel',
         builder: (context, state) => const MedicoPanelScreen(),
+      ),
+      GoRoute(
+        path: '/doctor-panel',
+        name: 'doctor-panel',
+        builder: (context, state) => const DoctorPanelScreen(),
+      ),
+      GoRoute(
+        path: '/detalle-cita-medico/:citaId',
+        name: 'detalle-cita-medico',
+        builder: (context, state) {
+          final citaId = state.pathParameters['citaId']!;
+          return DetalleCitaMedicoScreen(citaId: citaId);
+        },
       ),
     ],
     redirect: (context, state) {

@@ -805,10 +805,12 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
       if (usuarioData == null) {
         throw Exception('No se pudo obtener la información del usuario');
       }
-      
+
       // Verificar que el usuario tiene todos los datos necesarios
       if (!usuarioData.containsKey('id')) {
-        throw Exception('El usuario no tiene un ID válido. Por favor, inicie sesión nuevamente.');
+        throw Exception(
+          'El usuario no tiene un ID válido. Por favor, inicie sesión nuevamente.',
+        );
       }
 
       // Crear fecha a partir de los campos de texto de forma segura
@@ -860,8 +862,16 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
       if (usuarioId == null || usuarioId.isEmpty) {
         throw Exception('No se pudo obtener el ID del usuario');
       }
-      final nombreArchivo =
+
+      // Usar el nombre original del archivo si está disponible, sino generar uno
+      final nombreArchivoStorage =
+          _nombreArchivo ??
           '${usuarioId}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+      // Nombre para el documento médico (usar el original si está disponible)
+      final nombreArchivoDoc =
+          _nombreArchivo ??
+          'historia_clinica_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       Map<String, dynamic> resultadoArchivo;
 
@@ -878,15 +888,15 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
         if (kIsWeb) {
           resultadoArchivo = await SupabaseService.instance.subirArchivoBytes(
             bytes: _archivoBytes!,
-            nombreArchivo: nombreArchivo,
+            nombreArchivo: nombreArchivoStorage,
           );
         } else {
           final tmpDir = await getTemporaryDirectory();
-          final tmpFile = File('${tmpDir.path}/$nombreArchivo');
+          final tmpFile = File('${tmpDir.path}/$nombreArchivoStorage');
           await tmpFile.writeAsBytes(_archivoBytes!, flush: true);
           resultadoArchivo = await SupabaseService.instance.subirArchivoPDF(
             archivo: tmpFile,
-            nombreArchivo: nombreArchivo,
+            nombreArchivo: nombreArchivoStorage,
           );
         }
       } else {
@@ -894,7 +904,9 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
       }
 
       if (!resultadoArchivo['success']) {
-        throw Exception(resultadoArchivo['message'] ?? 'Error desconocido al subir archivo');
+        throw Exception(
+          resultadoArchivo['message'] ?? 'Error desconocido al subir archivo',
+        );
       }
 
       // Verificar que la URL existe
@@ -908,6 +920,7 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
       if (tipoSel == null || tipoSel.isEmpty) {
         throw Exception('Por favor seleccione un tipo de cita');
       }
+
       final resultadoCita = await SupabaseService.instance.agendarCita(
         usuarioId: usuarioId,
         tipoCita: tipoSel,
@@ -915,6 +928,7 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
         fecha: fecha,
         hora: horaFormateada,
         pdfUrl: pdfUrl,
+        nombreArchivo: nombreArchivoDoc,
       );
 
       if (resultadoCita['success'] == true) {

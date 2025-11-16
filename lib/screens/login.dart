@@ -211,6 +211,35 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 16),
 
+              // Acceso directo al Panel del Médico
+              ElevatedButton.icon(
+                onPressed: SessionService.instance.isSuperUser
+                    ? () => context.go('/medico-panel')
+                    : null,
+                icon: const Icon(Icons.medical_information),
+                label: const Text(
+                  'Panel del Médico',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple[600],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Para acceder al panel, inicie sesión como médico.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
+
+              const SizedBox(height: 16),
+
               // Enlace a Registro
               TextButton(
                 onPressed: () => context.go('/registro'),

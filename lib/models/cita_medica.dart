@@ -7,6 +7,7 @@ class CitaMedica {
   final String hora;
   final String pdfUrl;
   final DateTime createdAt;
+  final String? nombreCompletoPaciente; // Nombre completo del paciente
 
   CitaMedica({
     required this.id,
@@ -17,9 +18,20 @@ class CitaMedica {
     required this.hora,
     required this.pdfUrl,
     required this.createdAt,
+    this.nombreCompletoPaciente,
   });
 
   factory CitaMedica.fromJson(Map<String, dynamic> json) {
+    // Extraer nombre completo del paciente si existe en usuarios
+    String? nombreCompleto;
+    if (json['usuarios'] != null && json['usuarios'] is Map) {
+      final usuarios = json['usuarios'] as Map<String, dynamic>;
+      final nombres = usuarios['nombres']?.toString() ?? '';
+      final apellidos = usuarios['apellidos']?.toString() ?? '';
+      nombreCompleto = '$nombres $apellidos'.trim();
+      if (nombreCompleto.isEmpty) nombreCompleto = null;
+    }
+
     return CitaMedica(
       id: json['id'] ?? '',
       usuarioId: json['usuario_id'] ?? '',
@@ -31,6 +43,7 @@ class CitaMedica {
       createdAt: DateTime.parse(
         json['created_at'] ?? DateTime.now().toIso8601String(),
       ),
+      nombreCompletoPaciente: nombreCompleto,
     );
   }
 

@@ -58,6 +58,15 @@ dependencies:
   
   # Sistema de archivos temporal
   path_provider: ^2.1.4
+  
+  # Gemini
+  google_generative_ai: ^0.4.4
+  
+  # HTTP cliente
+  http: ^1.5.0
+  
+  # Visor de PDF
+  syncfusion_flutter_pdfviewer: ^28.1.36
 
 dev_dependencies:
   flutter_test:
