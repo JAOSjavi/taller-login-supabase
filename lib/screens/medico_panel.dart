@@ -325,6 +325,24 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
     }
   }
 
+  Future<void> _cerrarSesion() async {
+    try {
+      await SupabaseService.instance.cerrarSesion();
+      if (mounted) {
+        context.go('/login');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cerrar sesión: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -360,6 +378,11 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
               }
             },
             tooltip: 'Actualizar',
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _cerrarSesion,
+            tooltip: 'Cerrar sesión',
           ),
         ],
       ),
