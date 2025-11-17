@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:get/get.dart';
 import '../services/supabase_service.dart';
 import '../models/usuario.dart';
+import '../controllers/theme_controller.dart';
 
 class BienvenidaScreen extends StatefulWidget {
   const BienvenidaScreen({super.key});
@@ -76,13 +78,25 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Bienvenido'),
         backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          GetBuilder<ThemeController>(
+            builder: (controller) => IconButton(
+              icon: Icon(
+                controller.isDarkMode.value
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
+              ),
+              onPressed: () => controller.toggleTheme(),
+              tooltip: controller.isDarkMode.value
+                  ? 'Modo claro'
+                  : 'Modo oscuro',
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _cerrarSesion,

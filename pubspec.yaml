@@ -67,6 +67,9 @@ dependencies:
   
   # Visor de PDF
   syncfusion_flutter_pdfviewer: ^28.1.36
+  
+  # GetX para gestión de estado y temas
+  get: ^4.6.6
 
 dev_dependencies:
   flutter_test:

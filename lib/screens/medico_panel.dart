@@ -3,8 +3,10 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:get/get.dart';
 import '../services/supabase_service.dart';
 import '../services/gemini_service.dart';
+import '../controllers/theme_controller.dart';
 
 class MedicoPanelScreen extends StatefulWidget {
   const MedicoPanelScreen({super.key});
@@ -366,6 +368,19 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
           ),
         ),
         actions: [
+          GetBuilder<ThemeController>(
+            builder: (controller) => IconButton(
+              icon: Icon(
+                controller.isDarkMode.value
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
+              ),
+              onPressed: () => controller.toggleTheme(),
+              tooltip: controller.isDarkMode.value
+                  ? 'Modo claro'
+                  : 'Modo oscuro',
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
