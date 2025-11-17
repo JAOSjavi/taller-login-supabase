@@ -140,11 +140,28 @@ class _DoctorPanelScreenState extends State<DoctorPanelScreen> {
         _mensajesChat.add({'tipo': 'asistente', 'mensaje': respuesta});
       });
     } catch (e) {
+      // Mensaje de error más amigable
+      String mensajeError = 'Error al procesar la pregunta';
+
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('sobrecargado') ||
+          errorStr.contains('503') ||
+          errorStr.contains('unavailable')) {
+        mensajeError =
+            'El servicio de IA está temporalmente sobrecargado. '
+            'Por favor, intenta de nuevo en unos minutos.';
+      } else if (errorStr.contains('bloqueada')) {
+        mensajeError =
+            'La consulta fue bloqueada por seguridad. '
+            'Por favor, reformula tu pregunta.';
+      } else if (errorStr.contains('api key')) {
+        mensajeError = 'Error de configuración: API Key no válida.';
+      } else {
+        mensajeError = 'Error: ${e.toString()}';
+      }
+
       setState(() {
-        _mensajesChat.add({
-          'tipo': 'error',
-          'mensaje': 'Error: ${e.toString()}',
-        });
+        _mensajesChat.add({'tipo': 'error', 'mensaje': mensajeError});
       });
     } finally {
       setState(() {

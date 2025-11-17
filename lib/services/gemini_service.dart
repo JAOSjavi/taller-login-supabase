@@ -21,9 +21,15 @@ class GeminiService {
       throw Exception('GEMINI_API_KEY no está configurada en el archivo .env');
     }
 
-    _model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: apiKey);
+    _model = GenerativeModel(
+      model: 'gemini-2.5-flash-preview-09-2025',
+      apiKey: apiKey,
+    );
 
-    _chatModel = GenerativeModel(model: 'gemini-2.5-flash', apiKey: apiKey);
+    _chatModel = GenerativeModel(
+      model: 'gemini-2.5-flash-preview-09-2025',
+      apiKey: apiKey,
+    );
   }
 
   /// Extrae texto de un PDF desde una URL
