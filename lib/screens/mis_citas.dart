@@ -14,8 +14,6 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
   List<CitaMedica> _citas = [];
   bool _isLoading = true;
   String? _usuarioId;
-  String? _errorMessage;
-  bool _mostrarDebugInfo = false; // Para mostrar información de depuración
 
   @override
   void initState() {
@@ -26,7 +24,6 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
   Future<void> _cargarCitas() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
@@ -49,16 +46,9 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
         setState(() {
           _citas = citasData.map((data) => CitaMedica.fromJson(data)).toList();
         });
-      } else {
-        setState(() {
-          _errorMessage = 'No se pudo obtener la información del usuario';
-        });
       }
     } catch (e) {
       print('❌ Error al cargar citas: $e');
-      setState(() {
-        _errorMessage = 'Error al cargar citas: ${e.toString()}';
-      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -186,106 +176,8 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
     }
   }
 
-  Future<void> _limpiarDatosPrueba() async {
-    final confirmacion = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Limpiar Datos de Prueba'),
-        content: const Text(
-          '¿Está seguro de que desea eliminar todas las citas que contienen PDFs de prueba? Esta acción no se puede deshacer.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmacion == true) {
-      try {
-        // Filtrar citas que tienen PDFs de prueba
-        final citasPrueba = _citas
-            .where((cita) => cita.pdfUrl.contains('ejemplo.com'))
-            .toList();
-
-        for (var cita in citasPrueba) {
-          await SupabaseService.instance.cancelarCita(cita.id);
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Se eliminaron ${citasPrueba.length} citas de prueba',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _cargarCitas(); // Recargar la lista
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error al eliminar citas de prueba: ${e.toString()}',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
   void _editarCita(CitaMedica cita) {
     context.go('/editar-cita/${cita.id}');
-  }
-
-  Future<void> _probarEliminacion() async {
-    if (_citas.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No hay citas para probar'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    final primeraCita = _citas.first;
-
-    try {
-      final resultado = await SupabaseService.instance.probarEliminacion(
-        primeraCita.id,
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(resultado['message']),
-            backgroundColor: resultado['success'] ? Colors.green : Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error en prueba: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    }
   }
 
   Color _getEstadoColor(DateTime fecha) {
@@ -326,16 +218,8 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final scaffoldBg = theme.scaffoldBackgroundColor;
     final cardColor = theme.cardColor;
-    final sectionBackground = isDark
-        ? const Color(0xFF1F1F1F)
-        : Colors.blue[50]!;
     final neutralText = isDark ? Colors.white70 : Colors.grey[600]!;
     final secondaryText = isDark ? Colors.white60 : Colors.grey[500]!;
-    final baseShadow = BoxShadow(
-      color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
-      blurRadius: 8,
-      offset: const Offset(0, 3),
-    );
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -355,15 +239,6 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
             tooltip: 'Refrescar citas',
           ),
           IconButton(
-            icon: const Icon(Icons.bug_report),
-            onPressed: () {
-              setState(() {
-                _mostrarDebugInfo = !_mostrarDebugInfo;
-              });
-            },
-            tooltip: 'Información de depuración',
-          ),
-          IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => context.go('/agendar-cita'),
             tooltip: 'Agendar nueva cita',
@@ -372,103 +247,6 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
       ),
       body: Column(
         children: [
-          // Información de depuración
-          if (_mostrarDebugInfo)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: sectionBackground,
-                boxShadow: [baseShadow],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.bug_report,
-                        color: theme.colorScheme.primary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Información de Depuración',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.blue[800],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '👤 Usuario ID: ${_usuarioId ?? "No disponible"}',
-                    style: TextStyle(color: neutralText),
-                  ),
-                  Text(
-                    '📊 Total de citas: ${_citas.length}',
-                    style: TextStyle(color: neutralText),
-                  ),
-                  Text(
-                    '🧪 Citas de prueba: ${_citas.where((cita) => cita.pdfUrl.contains('ejemplo.com')).length}',
-                    style: TextStyle(color: neutralText),
-                  ),
-                  Text(
-                    '🕒 Última actualización: ${DateTime.now().toString().substring(0, 19)}',
-                    style: TextStyle(color: neutralText),
-                  ),
-                  if (_errorMessage != null)
-                    Text(
-                      '❌ Error: $_errorMessage',
-                      style: TextStyle(
-                        color: isDark ? Colors.red[300] : Colors.red[700],
-                      ),
-                    ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _limpiarDatosPrueba,
-                          icon: const Icon(Icons.cleaning_services, size: 16),
-                          label: const Text(
-                            'Limpiar Pruebas',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange[600],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _probarEliminacion(),
-                          icon: const Icon(Icons.bug_report, size: 16),
-                          label: const Text(
-                            'Probar Eliminación',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple[600],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
           // Contenido principal
           Expanded(
             child: _isLoading
@@ -522,341 +300,330 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
 
                         return Card(
                           margin: const EdgeInsets.only(bottom: 16),
-                          elevation: 2,
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           color: cardColor,
-                          shadowColor: Colors.transparent,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Header con estado
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: estadoColor.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: estadoColor.withOpacity(0.3),
+                          shadowColor: Colors.black.withOpacity(
+                            isDark ? 0.4 : 0.1,
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: cardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(
+                                    isDark ? 0.3 : 0.1,
+                                  ),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                  spreadRadius: 0,
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(
+                                    isDark ? 0.2 : 0.05,
+                                  ),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Header con estado
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
                                         ),
-                                      ),
-                                      child: Text(
-                                        estadoTexto,
-                                        style: TextStyle(
-                                          color: estadoColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                    PopupMenuButton<String>(
-                                      onSelected: (value) {
-                                        switch (value) {
-                                          case 'editar':
-                                            _editarCita(cita);
-                                            break;
-                                          case 'cancelar':
-                                            _cancelarCita(cita.id);
-                                            break;
-                                        }
-                                      },
-                                      itemBuilder: (context) => [
-                                        const PopupMenuItem(
-                                          value: 'editar',
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.edit, size: 20),
-                                              SizedBox(width: 8),
-                                              Text('Editar'),
-                                            ],
+                                        decoration: BoxDecoration(
+                                          color: estadoColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: estadoColor.withOpacity(0.3),
                                           ),
                                         ),
-                                        const PopupMenuItem(
-                                          value: 'cancelar',
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.cancel,
-                                                size: 20,
-                                                color: Colors.red,
-                                              ),
-                                              SizedBox(width: 8),
-                                              Text(
-                                                'Cancelar',
-                                                style: TextStyle(
+                                        child: Text(
+                                          estadoTexto,
+                                          style: TextStyle(
+                                            color: estadoColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                      PopupMenuButton<String>(
+                                        onSelected: (value) {
+                                          switch (value) {
+                                            case 'editar':
+                                              _editarCita(cita);
+                                              break;
+                                            case 'cancelar':
+                                              _cancelarCita(cita.id);
+                                              break;
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          const PopupMenuItem(
+                                            value: 'editar',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.edit, size: 20),
+                                                SizedBox(width: 8),
+                                                Text('Editar'),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuItem(
+                                            value: 'cancelar',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.cancel,
+                                                  size: 20,
                                                   color: Colors.red,
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 12),
-
-                                // Tipo de cita
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.medical_services,
-                                      size: 20,
-                                      color: Colors.blue[600],
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      cita.tipoCita,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 8),
-
-                                // Doctor
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.person,
-                                      size: 20,
-                                      color: neutralText,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      cita.doctor,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.grey[700],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 8),
-
-                                // Fecha y hora
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today,
-                                      size: 20,
-                                      color: neutralText,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      cita.fechaFormateada,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.grey[700],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Icon(
-                                      Icons.access_time,
-                                      size: 20,
-                                      color: neutralText,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      cita.hora,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.grey[700],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 12),
-
-                                // PDF
-                                if (cita.pdfUrl.isNotEmpty)
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.picture_as_pdf,
-                                        size: 20,
-                                        color: Colors.red[400],
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Historia clínica adjunta',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: neutralText,
-                                              ),
-                                            ),
-                                            if (_mostrarDebugInfo)
-                                              Text(
-                                                'URL: ${cita.pdfUrl}',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: neutralText,
-                                                  fontFamily: 'monospace',
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Cancelar',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                  ),
                                                 ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          // Aquí podrías abrir el PDF en un visor
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Función de visualización de PDF próximamente',
-                                              ),
+                                              ],
                                             ),
-                                          );
-                                        },
-                                        child: const Text('Ver PDF'),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                if (cita.diagnostico != null &&
-                                    cita.diagnostico!.trim().isNotEmpty) ...[
+
                                   const SizedBox(height: 12),
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? const Color(0xFF1F2B22)
-                                          : Colors.green[50],
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
+
+                                  // Tipo de cita
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.medical_services,
+                                        size: 20,
+                                        color: Colors.blue[600],
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        cita.tipoCita,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 8),
+
+                                  // Doctor
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.person,
+                                        size: 20,
+                                        color: neutralText,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        cita.doctor,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isDark
+                                              ? Colors.white70
+                                              : Colors.grey[700],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 8),
+
+                                  // Fecha y hora
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        size: 20,
+                                        color: neutralText,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        cita.fechaFormateada,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isDark
+                                              ? Colors.white70
+                                              : Colors.grey[700],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 20,
+                                        color: neutralText,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        cita.hora,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isDark
+                                              ? Colors.white70
+                                              : Colors.grey[700],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  // PDF
+                                  if (cita.pdfUrl.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
                                         color: isDark
-                                            ? const Color(0xFF2D4A38)
-                                            : (Colors.green[100] ??
-                                                  Colors.green),
+                                            ? const Color(0xFF2A2A2A)
+                                            : Colors.grey[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: isDark
+                                              ? const Color(0xFF444444)
+                                              : Colors.grey[300]!,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              isDark ? 0.2 : 0.05,
+                                            ),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.picture_as_pdf,
+                                            size: 20,
+                                            color: Colors.red[400],
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Historia clínica adjunta',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: neutralText,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              // Aquí podrías abrir el PDF en un visor
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Función de visualización de PDF próximamente',
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            child: const Text('Ver PDF'),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.assignment_turned_in,
-                                              size: 20,
-                                              color: Colors.green[700],
+                                  if (cita.diagnostico != null &&
+                                      cita.diagnostico!.trim().isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? const Color(0xFF1F2B22)
+                                            : Colors.green[50],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: isDark
+                                              ? const Color(0xFF2D4A38)
+                                              : (Colors.green[100] ??
+                                                    Colors.green),
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              isDark ? 0.2 : 0.08,
                                             ),
-                                            const SizedBox(width: 8),
-                                            const Text(
-                                              'Diagnóstico del médico',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w600,
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.assignment_turned_in,
+                                                size: 20,
+                                                color: Colors.green[700],
                                               ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'Diagnóstico del médico',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            cita.diagnostico!.trim(),
+                                            style: TextStyle(
+                                              height: 1.4,
+                                              fontSize: 14,
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : Colors.black87,
                                             ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          cita.diagnostico!.trim(),
-                                          style: TextStyle(
-                                            height: 1.4,
-                                            fontSize: 14,
-                                            color: isDark
-                                                ? Colors.white
-                                                : Colors.black87,
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
-
-                                // Información adicional de depuración
-                                if (_mostrarDebugInfo) ...[
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? const Color(0xFF2A2A2A)
-                                          : Colors.grey[100],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '🔍 Info de Depuración:',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color: neutralText,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'ID: ${cita.id}',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: neutralText,
-                                            fontFamily: 'monospace',
-                                          ),
-                                        ),
-                                        Text(
-                                          'Creada: ${cita.createdAt.toString().substring(0, 19)}',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: neutralText,
-                                            fontFamily: 'monospace',
-                                          ),
-                                        ),
-                                        Text(
-                                          'PDF de prueba: ${cita.pdfUrl.contains('ejemplo.com') ? 'SÍ' : 'NO'}',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color:
-                                                cita.pdfUrl.contains(
-                                                  'ejemplo.com',
-                                                )
-                                                ? (isDark
-                                                      ? Colors.orange[300]
-                                                      : Colors.orange[700])
-                                                : (isDark
-                                                      ? Colors.green[300]
-                                                      : Colors.green[700]),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ],
+                              ),
                             ),
                           ),
                         );
