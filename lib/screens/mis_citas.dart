@@ -322,8 +322,23 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final scaffoldBg = theme.scaffoldBackgroundColor;
+    final cardColor = theme.cardColor;
+    final sectionBackground = isDark
+        ? const Color(0xFF1F1F1F)
+        : Colors.blue[50]!;
+    final neutralText = isDark ? Colors.white70 : Colors.grey[600]!;
+    final secondaryText = isDark ? Colors.white60 : Colors.grey[500]!;
+    final baseShadow = BoxShadow(
+      color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
+      blurRadius: 8,
+      offset: const Offset(0, 3),
+    );
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
         title: const Text('Mis Citas Médicas'),
         backgroundColor: Colors.blue[600],
@@ -362,36 +377,53 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
-              color: Colors.blue[50],
+              decoration: BoxDecoration(
+                color: sectionBackground,
+                boxShadow: [baseShadow],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.bug_report, color: Colors.blue[600], size: 20),
+                      Icon(
+                        Icons.bug_report,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Información de Depuración',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue[800],
+                          color: isDark ? Colors.white : Colors.blue[800],
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text('👤 Usuario ID: ${_usuarioId ?? "No disponible"}'),
-                  Text('📊 Total de citas: ${_citas.length}'),
+                  Text(
+                    '👤 Usuario ID: ${_usuarioId ?? "No disponible"}',
+                    style: TextStyle(color: neutralText),
+                  ),
+                  Text(
+                    '📊 Total de citas: ${_citas.length}',
+                    style: TextStyle(color: neutralText),
+                  ),
                   Text(
                     '🧪 Citas de prueba: ${_citas.where((cita) => cita.pdfUrl.contains('ejemplo.com')).length}',
+                    style: TextStyle(color: neutralText),
                   ),
                   Text(
                     '🕒 Última actualización: ${DateTime.now().toString().substring(0, 19)}',
+                    style: TextStyle(color: neutralText),
                   ),
                   if (_errorMessage != null)
                     Text(
                       '❌ Error: $_errorMessage',
-                      style: TextStyle(color: Colors.red[700]),
+                      style: TextStyle(
+                        color: isDark ? Colors.red[300] : Colors.red[700],
+                      ),
                     ),
                   const SizedBox(height: 8),
                   Row(
@@ -449,23 +481,17 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                         Icon(
                           Icons.calendar_today_outlined,
                           size: 80,
-                          color: Colors.grey[400],
+                          color: neutralText,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No tienes citas agendadas',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
+                          style: TextStyle(fontSize: 18, color: neutralText),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Agenda tu primera cita médica',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
+                          style: TextStyle(fontSize: 14, color: secondaryText),
                         ),
                         const SizedBox(height: 24),
                         ElevatedButton.icon(
@@ -500,6 +526,8 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          color: cardColor,
+                          shadowColor: Colors.transparent,
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Column(
@@ -606,14 +634,16 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                     Icon(
                                       Icons.person,
                                       size: 20,
-                                      color: Colors.grey[600],
+                                      color: neutralText,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       cita.doctor,
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[700],
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.grey[700],
                                       ),
                                     ),
                                   ],
@@ -627,28 +657,32 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                     Icon(
                                       Icons.calendar_today,
                                       size: 20,
-                                      color: Colors.grey[600],
+                                      color: neutralText,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       cita.fechaFormateada,
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[700],
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.grey[700],
                                       ),
                                     ),
                                     const SizedBox(width: 16),
                                     Icon(
                                       Icons.access_time,
                                       size: 20,
-                                      color: Colors.grey[600],
+                                      color: neutralText,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       cita.hora,
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[700],
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.grey[700],
                                       ),
                                     ),
                                   ],
@@ -663,7 +697,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                       Icon(
                                         Icons.picture_as_pdf,
                                         size: 20,
-                                        color: Colors.red[600],
+                                        color: Colors.red[400],
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
@@ -675,7 +709,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                               'Historia clínica adjunta',
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: Colors.grey[600],
+                                                color: neutralText,
                                               ),
                                             ),
                                             if (_mostrarDebugInfo)
@@ -683,7 +717,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                                 'URL: ${cita.pdfUrl}',
                                                 style: TextStyle(
                                                   fontSize: 10,
-                                                  color: Colors.grey[500],
+                                                  color: neutralText,
                                                   fontFamily: 'monospace',
                                                 ),
                                               ),
@@ -714,11 +748,15 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                     width: double.infinity,
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.green[50],
+                                      color: isDark
+                                          ? const Color(0xFF1F2B22)
+                                          : Colors.green[50],
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                        color:
-                                            Colors.green[100] ?? Colors.green,
+                                        color: isDark
+                                            ? const Color(0xFF2D4A38)
+                                            : (Colors.green[100] ??
+                                                  Colors.green),
                                       ),
                                     ),
                                     child: Column(
@@ -744,9 +782,12 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                         const SizedBox(height: 8),
                                         Text(
                                           cita.diagnostico!.trim(),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             height: 1.4,
                                             fontSize: 14,
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black87,
                                           ),
                                         ),
                                       ],
@@ -760,7 +801,9 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[100],
+                                      color: isDark
+                                          ? const Color(0xFF2A2A2A)
+                                          : Colors.grey[100],
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Column(
@@ -772,7 +815,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.grey[700],
+                                            color: neutralText,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
@@ -780,7 +823,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                           'ID: ${cita.id}',
                                           style: TextStyle(
                                             fontSize: 10,
-                                            color: Colors.grey[600],
+                                            color: neutralText,
                                             fontFamily: 'monospace',
                                           ),
                                         ),
@@ -788,7 +831,7 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                           'Creada: ${cita.createdAt.toString().substring(0, 19)}',
                                           style: TextStyle(
                                             fontSize: 10,
-                                            color: Colors.grey[600],
+                                            color: neutralText,
                                             fontFamily: 'monospace',
                                           ),
                                         ),
@@ -800,8 +843,12 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                                 cita.pdfUrl.contains(
                                                   'ejemplo.com',
                                                 )
-                                                ? Colors.orange[700]
-                                                : Colors.green[700],
+                                                ? (isDark
+                                                      ? Colors.orange[300]
+                                                      : Colors.orange[700])
+                                                : (isDark
+                                                      ? Colors.green[300]
+                                                      : Colors.green[700]),
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),

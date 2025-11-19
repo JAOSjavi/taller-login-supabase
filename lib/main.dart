@@ -58,28 +58,52 @@ class MyApp extends StatelessWidget {
           ),
         ),
         darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.dark,
-          ),
+          colorScheme:
+              ColorScheme.fromSeed(
+                seedColor: Colors.grey,
+                brightness: Brightness.dark,
+              ).copyWith(
+                background: const Color(0xFF1E1E1E),
+                surface: const Color(0xFF2A2A2A),
+                primary: Colors.blueGrey[200],
+                secondary: Colors.blueGrey[100],
+              ),
           useMaterial3: true,
-          appBarTheme: AppBarTheme(
-            backgroundColor: Colors.blue[800],
+          scaffoldBackgroundColor: const Color(0xFF1E1E1E),
+          cardColor: const Color(0xFF2A2A2A),
+          dialogBackgroundColor: const Color(0xFF2A2A2A),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF2C2C2C),
             foregroundColor: Colors.white,
             elevation: 0,
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3C3C3C),
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
           inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            fillColor: const Color(0xFF2F2F2F),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF444444)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF444444)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.blueGrey),
+            ),
+            labelStyle: const TextStyle(color: Colors.white70),
+            hintStyle: const TextStyle(color: Colors.white54),
           ),
-          scaffoldBackgroundColor: Colors.grey[900],
-          cardColor: Colors.grey[800],
         ),
         themeMode: themeController.isDarkMode.value
             ? ThemeMode.dark

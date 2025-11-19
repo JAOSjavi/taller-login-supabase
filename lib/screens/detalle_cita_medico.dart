@@ -455,10 +455,25 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
   }
 
   Widget _buildDiagnosticoCard() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final diagnostico = (_citaData?['diagnostico'] ?? '').toString().trim();
     final tieneDiagnostico = diagnostico.isNotEmpty;
 
+    final secondaryText = isDark ? Colors.white70 : Colors.grey[600];
+    final Color infoBackground = isDark
+        ? const Color(0xFF1F2B22)
+        : (Colors.green[50] ?? Colors.green);
+    final Color infoBorder = isDark
+        ? const Color(0xFF2D4A38)
+        : (Colors.green[100] ?? Colors.green);
+    final Color emptyBackground = isDark
+        ? const Color(0xFF2C2C2C)
+        : (Colors.grey[100] ?? Colors.grey);
+    final primaryColor = theme.colorScheme.primary;
+
     return Card(
+      color: theme.cardColor,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -466,7 +481,7 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.assignment, color: Colors.blue[600]),
+                Icon(Icons.assignment, color: primaryColor),
                 const SizedBox(width: 8),
                 const Text(
                   'Diagnóstico del Paciente',
@@ -477,7 +492,7 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
             const SizedBox(height: 8),
             Text(
               'Esta información será visible para el paciente en su historial de citas.',
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 13, color: secondaryText),
             ),
             const SizedBox(height: 12),
             Align(
@@ -493,7 +508,7 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                       : 'Agregar diagnóstico',
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[600],
+                  backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -504,13 +519,17 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green[50],
+                  color: infoBackground,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green[100] ?? Colors.green),
+                  border: Border.all(color: infoBorder),
                 ),
                 child: Text(
                   diagnostico,
-                  style: const TextStyle(fontSize: 15, height: 1.4),
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.4,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
                 ),
               )
             else
@@ -518,18 +537,24 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: emptyBackground,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, color: Colors.grey[500]),
+                    Icon(
+                      Icons.info_outline,
+                      color: isDark ? Colors.white54 : Colors.grey[500],
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Aún no has registrado un diagnóstico para esta cita.',
-                        style: TextStyle(color: Colors.grey[700], height: 1.4),
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.grey[700],
+                          height: 1.4,
+                        ),
                       ),
                     ),
                   ],
@@ -542,18 +567,31 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
   }
 
   Widget _buildChatTab() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final pdfUrl = _citaData!['pdf_url'] as String?;
 
+    final neutralText = isDark ? Colors.white70 : Colors.grey;
+    final systemBg = isDark ? const Color(0xFF1E2A32) : Colors.blue[50];
+    final systemText = isDark ? Colors.white70 : Colors.black87;
+    final messageBg = isDark ? const Color(0xFF3A3A3A) : Colors.grey[200];
+    final errorBg = isDark ? const Color(0xFF4E1F1F) : Colors.red[50];
+    final chatInputBg = isDark ? const Color(0xFF252525) : Colors.grey[100];
+    final chatFieldBg = isDark ? const Color(0xFF303030) : Colors.white;
+    final chatFieldBorder = isDark
+        ? const Color(0xFF444444)
+        : Colors.grey[300]!;
+
     if (pdfUrl == null || pdfUrl.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.description, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
+            Icon(Icons.description, size: 64, color: neutralText),
+            const SizedBox(height: 16),
             Text(
               'No hay historia clínica disponible',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: neutralText),
             ),
           ],
         ),
@@ -565,11 +603,18 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.medical_information, size: 64, color: Colors.blue),
+            Icon(
+              Icons.medical_information,
+              size: 64,
+              color: theme.primaryColor,
+            ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Cargar historia clínica para activar el chatbot',
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(
+                fontSize: 16,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -592,17 +637,17 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.chat_bubble_outline,
                               size: 64,
-                              color: Colors.grey,
+                              color: neutralText,
                             ),
                             const SizedBox(height: 16),
                             Text(
                               _historiaCargada
                                   ? 'Haz una pregunta sobre el paciente'
                                   : 'Cargando historia clínica...',
-                              style: const TextStyle(color: Colors.grey),
+                              style: TextStyle(color: neutralText),
                             ),
                           ],
                         ),
@@ -621,21 +666,24 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color: systemBg,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.info_outline,
                               size: 16,
-                              color: Colors.blue,
+                              color: theme.colorScheme.primary,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 mensaje['mensaje'] ?? '',
-                                style: const TextStyle(fontSize: 12),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: systemText,
+                                ),
                               ),
                             ),
                           ],
@@ -655,10 +703,10 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: isError
-                              ? Colors.red[50]
+                              ? errorBg
                               : isUsuario
-                              ? Colors.blue[600]
-                              : Colors.grey[200],
+                              ? theme.primaryColor
+                              : messageBg,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         constraints: BoxConstraints(
@@ -669,7 +717,7 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                           style: TextStyle(
                             color: isUsuario || isError
                                 ? Colors.white
-                                : Colors.black87,
+                                : (isDark ? Colors.white : Colors.black87),
                           ),
                         ),
                       ),
@@ -685,10 +733,10 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: chatInputBg,
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
+                color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, -2),
               ),
@@ -701,11 +749,23 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                   controller: _mensajeController,
                   decoration: InputDecoration(
                     hintText: 'Escribe tu pregunta...',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white54 : Colors.grey[600],
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide(color: chatFieldBorder),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide(color: chatFieldBorder),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide(color: theme.colorScheme.primary),
                     ),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: chatFieldBg,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
@@ -721,9 +781,9 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                     ? _enviarMensaje
                     : null,
                 icon: const Icon(Icons.send),
-                color: Colors.blue[600],
+                color: theme.colorScheme.primary,
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.white,
+                  backgroundColor: chatFieldBg,
                   padding: const EdgeInsets.all(12),
                 ),
               ),

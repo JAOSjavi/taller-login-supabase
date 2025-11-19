@@ -23,7 +23,6 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
   // Calendario
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  CalendarFormat _calendarFormat = CalendarFormat.month;
   final Map<String, List<Map<String, dynamic>>> _eventsByDate = {};
   int _totalCitas = 0;
   int _citasHoy = 0;
@@ -434,16 +433,32 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
 
   // ========== TAB CALENDARIO ==========
   Widget _buildCalendarioTab() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final sectionBackground = isDark
+        ? const Color(0xFF2A2A2A)
+        : Colors.blue[50];
+    final fieldFillColor = isDark ? const Color(0xFF2F2F2F) : Colors.white;
+    final cardBackground = theme.cardColor;
+    final subtleShadow = BoxShadow(
+      color: Colors.black.withOpacity(isDark ? 0.25 : 0.08),
+      blurRadius: 8,
+      offset: const Offset(0, 3),
+    );
+    final headerBackground = isDark ? const Color(0xFF353535) : Colors.blue[50];
+    final primaryColor = theme.colorScheme.primary;
+
     return Column(
       children: [
         // Estadísticas
         Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.blue[50],
+          color: sectionBackground,
           child: Row(
             children: [
               Expanded(
                 child: _buildStatCard(
+                  context,
                   'Total del Mes',
                   '$_totalCitas',
                   Icons.calendar_month,
@@ -453,6 +468,7 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatCard(
+                  context,
                   'Hoy',
                   '$_citasHoy',
                   Icons.today,
@@ -462,6 +478,7 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatCard(
+                  context,
                   'Esta Semana',
                   '$_citasSemana',
                   Icons.date_range,
@@ -489,7 +506,7 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: fieldFillColor,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 12,
@@ -559,15 +576,9 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                 Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBackground,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    boxShadow: [subtleShadow],
                   ),
                   padding: const EdgeInsets.all(8),
                   child: LayoutBuilder(
@@ -583,9 +594,11 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                         startingDayOfWeek: StartingDayOfWeek.monday,
                         calendarStyle: CalendarStyle(
                           outsideDaysVisible: false,
-                          weekendTextStyle: TextStyle(color: Colors.red[700]),
+                          weekendTextStyle: TextStyle(
+                            color: isDark ? Colors.red[200] : Colors.red[700],
+                          ),
                           selectedDecoration: BoxDecoration(
-                            color: Colors.blue[600],
+                            color: primaryColor,
                             shape: BoxShape.circle,
                           ),
                           selectedTextStyle: const TextStyle(
@@ -593,11 +606,11 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                             fontWeight: FontWeight.bold,
                           ),
                           todayDecoration: BoxDecoration(
-                            color: Colors.blue[200],
+                            color: primaryColor.withOpacity(0.2),
                             shape: BoxShape.circle,
                           ),
                           todayTextStyle: TextStyle(
-                            color: Colors.blue[900],
+                            color: primaryColor,
                             fontWeight: FontWeight.bold,
                           ),
                           markerDecoration: BoxDecoration(
@@ -611,14 +624,14 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                           formatButtonShowsNext: false,
                           leftChevronIcon: Icon(
                             Icons.chevron_left,
-                            color: Colors.blue[600],
+                            color: primaryColor,
                           ),
                           rightChevronIcon: Icon(
                             Icons.chevron_right,
-                            color: Colors.blue[600],
+                            color: primaryColor,
                           ),
                           titleTextStyle: TextStyle(
-                            color: Colors.blue[800],
+                            color: isDark ? Colors.white : Colors.blue[800],
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -668,22 +681,16 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                 // Lista de citas abajo
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBackground,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    boxShadow: [subtleShadow],
                   ),
                   child: Column(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color: headerBackground,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(12),
                             topRight: Radius.circular(12),
@@ -691,7 +698,7 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.event, color: Colors.blue),
+                            Icon(Icons.event, color: primaryColor),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -701,7 +708,9 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.blue[800],
+                                  color: isDark
+                                      ? Colors.white
+                                      : Colors.blue[800],
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -713,7 +722,7 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue[600],
+                                  color: primaryColor,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
@@ -770,7 +779,9 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2F2F2F)
+                        : Colors.white,
                   ),
                   onSubmitted: (_) => _loadTodasLasCitas(),
                 ),
@@ -966,41 +977,73 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
 
   // ========== TAB CHATBOT ==========
   Widget _buildChatbotTab() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final selectorBackground = isDark
+        ? const Color(0xFF2A2A2A)
+        : Colors.blue[50];
+    final dropdownFill = isDark ? const Color(0xFF2F2F2F) : Colors.white;
+    final dropdownTextColor = isDark ? Colors.white : Colors.black87;
+    final dropdownBorderColor = isDark
+        ? const Color(0xFF444444)
+        : Colors.grey[300]!;
+    final infoBackground = isDark ? const Color(0xFF303030) : Colors.blue[100];
+    final infoPrimaryText = isDark ? Colors.white : Colors.blue[800];
+    final infoSecondaryText = isDark ? Colors.white70 : Colors.blue[700];
+    final systemMessageBg = isDark ? const Color(0xFF1F2C34) : Colors.blue[50];
+    final messageBg = isDark ? const Color(0xFF3A3A3A) : Colors.grey[200];
+    final chatInputBg = isDark ? const Color(0xFF252525) : Colors.grey[100];
+    final chatInputFieldBg = isDark ? const Color(0xFF303030) : Colors.white;
+
     return Column(
       children: [
         // Selector de paciente
         Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.blue[50],
+          color: selectorBackground,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Seleccionar Paciente',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: dropdownTextColor,
+                ),
               ),
               const SizedBox(height: 12),
               _loadingPacientes
                   ? const Center(child: CircularProgressIndicator())
                   : _pacientes.isEmpty
-                  ? const Text('No hay pacientes disponibles')
+                  ? Text(
+                      'No hay pacientes disponibles',
+                      style: TextStyle(color: dropdownTextColor),
+                    )
                   : DropdownButtonFormField<Map<String, dynamic>>(
                       value: _pacienteSeleccionado,
                       decoration: InputDecoration(
                         labelText: 'Paciente',
+                        labelStyle: TextStyle(color: dropdownTextColor),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: dropdownBorderColor),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: dropdownFill,
                       ),
+                      dropdownColor: dropdownFill,
+                      style: TextStyle(color: dropdownTextColor),
                       items: _pacientes.map((paciente) {
                         final nombre =
                             '${paciente['nombres'] ?? ''} ${paciente['apellidos'] ?? ''}';
                         final cedula = paciente['cedula'] ?? '';
                         return DropdownMenuItem<Map<String, dynamic>>(
                           value: paciente,
-                          child: Text('$nombre - Cédula: $cedula'),
+                          child: Text(
+                            '$nombre - Cédula: $cedula',
+                            style: TextStyle(color: dropdownTextColor),
+                          ),
                         );
                       }).toList(),
                       onChanged: (paciente) {
@@ -1029,12 +1072,15 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                       Icon(
                         Icons.person_outline,
                         size: 64,
-                        color: Colors.grey[400],
+                        color: isDark ? Colors.white24 : Colors.grey[400],
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'Selecciona un paciente para consultar su historia clínica',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isDark ? Colors.white70 : Colors.grey[600],
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -1045,22 +1091,22 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                     // Información del paciente
                     Container(
                       padding: const EdgeInsets.all(12),
-                      color: Colors.blue[100],
+                      color: infoBackground,
                       child: Row(
                         children: [
-                          Icon(Icons.person, color: Colors.blue[800]),
+                          Icon(Icons.person, color: infoPrimaryText),
                           const SizedBox(width: 8),
                           Text(
                             '${_pacienteSeleccionado!['nombres'] ?? ''} ${_pacienteSeleccionado!['apellidos'] ?? ''}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.blue[800],
+                              color: infoPrimaryText,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Cédula: ${_pacienteSeleccionado!['cedula'] ?? ''}',
-                            style: TextStyle(color: Colors.blue[700]),
+                            style: TextStyle(color: infoSecondaryText),
                           ),
                         ],
                       ),
@@ -1109,22 +1155,23 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                                     ),
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: Colors.blue[50],
+                                      color: systemMessageBg,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.info_outline,
                                           size: 16,
-                                          color: Colors.blue,
+                                          color: theme.colorScheme.primary,
                                         ),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
                                             mensaje['mensaje'] ?? '',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
+                                              color: dropdownTextColor,
                                             ),
                                           ),
                                         ),
@@ -1147,10 +1194,12 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                                     ),
                                     decoration: BoxDecoration(
                                       color: isError
-                                          ? Colors.red[50]
+                                          ? (isDark
+                                                ? const Color(0xFF4E1F1F)
+                                                : Colors.red[50])
                                           : isUsuario
                                           ? Colors.blue[600]
-                                          : Colors.grey[200],
+                                          : messageBg,
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     constraints: BoxConstraints(
@@ -1163,7 +1212,9 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                                       style: TextStyle(
                                         color: isUsuario || isError
                                             ? Colors.white
-                                            : Colors.black87,
+                                            : (isDark
+                                                  ? Colors.white
+                                                  : Colors.black87),
                                       ),
                                     ),
                                   ),
@@ -1182,10 +1233,10 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: chatInputBg,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
+                            color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
                             blurRadius: 4,
                             offset: const Offset(0, -2),
                           ),
@@ -1198,11 +1249,21 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                               controller: _mensajeController,
                               decoration: InputDecoration(
                                 hintText: 'Escribe tu pregunta...',
+                                hintStyle: TextStyle(
+                                  color: isDark
+                                      ? Colors.white54
+                                      : Colors.grey[600],
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(24),
+                                  borderSide: BorderSide(
+                                    color: isDark
+                                        ? const Color(0xFF444444)
+                                        : Colors.grey[300]!,
+                                  ),
                                 ),
                                 filled: true,
-                                fillColor: Colors.white,
+                                fillColor: chatInputFieldBg,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 12,
@@ -1218,9 +1279,9 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
                                 ? _enviarMensaje
                                 : null,
                             icon: const Icon(Icons.send),
-                            color: Colors.blue[600],
+                            color: theme.colorScheme.primary,
                             style: IconButton.styleFrom(
-                              backgroundColor: Colors.white,
+                              backgroundColor: chatInputFieldBg,
                               padding: const EdgeInsets.all(12),
                             ),
                           ),
@@ -1236,20 +1297,23 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
 
   // ========== WIDGETS AUXILIARES ==========
   Widget _buildStatCard(
+    BuildContext context,
     String title,
     String value,
     IconData icon,
     Color color,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -1269,7 +1333,10 @@ class _MedicoPanelScreenState extends State<MedicoPanelScreen>
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white70 : Colors.grey[600],
+            ),
             textAlign: TextAlign.center,
           ),
         ],
