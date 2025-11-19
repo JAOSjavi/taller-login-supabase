@@ -407,7 +407,7 @@ class SupabaseService {
                 .select(
                   'id, fecha, hora, tipo_cita, usuario_id, doctor, usuarios (nombres, apellidos)',
                 )
-                .eq('doctor', doctor!.trim())
+                .eq('doctor', doctor.trim())
                 .gte('fecha', desde.toIso8601String().split('T')[0])
                 .lte('fecha', hasta.toIso8601String().split('T')[0])
                 .order('fecha', ascending: true)
@@ -430,7 +430,7 @@ class SupabaseService {
           ? await _client
                 .from('citas_medicas')
                 .select('*')
-                .eq('doctor', doctor!.trim())
+                .eq('doctor', doctor.trim())
                 .gte('fecha', desde.toIso8601String().split('T')[0])
                 .lte('fecha', hasta.toIso8601String().split('T')[0])
                 .order('fecha', ascending: true)
@@ -450,7 +450,7 @@ class SupabaseService {
             ? await _client
                   .from('citas_medicas')
                   .select('*')
-                  .eq('doctor', doctor!.trim())
+                  .eq('doctor', doctor.trim())
                   .gte('fecha', desde.toIso8601String().split('T')[0])
                   .lte('fecha', hasta.toIso8601String().split('T')[0])
                   .order('fecha', ascending: true)
@@ -517,6 +517,36 @@ class SupabaseService {
       return {
         'success': false,
         'message': 'Error al actualizar cita: ${e.toString()}',
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> actualizarDiagnosticoCita({
+    required String citaId,
+    required String diagnostico,
+  }) async {
+    try {
+      final texto = diagnostico.trim();
+
+      final response = await _client
+          .from('citas_medicas')
+          .update({
+            'diagnostico': texto.isEmpty ? null : texto,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', citaId)
+          .select()
+          .single();
+
+      return {
+        'success': true,
+        'message': 'Diagnóstico actualizado correctamente',
+        'data': response,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Error al actualizar diagnóstico: ${e.toString()}',
       };
     }
   }
@@ -698,15 +728,15 @@ class SupabaseService {
           ? await _client
                 .from('citas_medicas')
                 .select(
-                  'id, fecha, hora, tipo_cita, usuario_id, doctor, usuarios (nombres, apellidos, cedula)',
+                  'id, fecha, hora, tipo_cita, usuario_id, doctor, diagnostico, usuarios (nombres, apellidos, cedula)',
                 )
-                .eq('doctor', doctor!.trim())
+                .eq('doctor', doctor.trim())
                 .order('fecha', ascending: false)
                 .order('hora', ascending: false)
           : await _client
                 .from('citas_medicas')
                 .select(
-                  'id, fecha, hora, tipo_cita, usuario_id, doctor, usuarios (nombres, apellidos, cedula)',
+                  'id, fecha, hora, tipo_cita, usuario_id, doctor, diagnostico, usuarios (nombres, apellidos, cedula)',
                 )
                 .order('fecha', ascending: false)
                 .order('hora', ascending: false);
@@ -721,7 +751,7 @@ class SupabaseService {
             ? await _client
                   .from('citas_medicas')
                   .select('*')
-                  .eq('doctor', doctor!.trim())
+                  .eq('doctor', doctor.trim())
                   .order('fecha', ascending: false)
                   .order('hora', ascending: false)
             : await _client

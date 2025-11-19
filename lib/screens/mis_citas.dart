@@ -707,6 +707,52 @@ class _MisCitasScreenState extends State<MisCitasScreen> {
                                       ),
                                     ],
                                   ),
+                                if (cita.diagnostico != null &&
+                                    cita.diagnostico!.trim().isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green[50],
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color:
+                                            Colors.green[100] ?? Colors.green,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.assignment_turned_in,
+                                              size: 20,
+                                              color: Colors.green[700],
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Text(
+                                              'Diagnóstico del médico',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          cita.diagnostico!.trim(),
+                                          style: const TextStyle(
+                                            height: 1.4,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
 
                                 // Información adicional de depuración
                                 if (_mostrarDebugInfo) ...[

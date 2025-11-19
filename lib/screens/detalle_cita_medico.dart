@@ -25,8 +25,10 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
   ChatSession? _chatSession;
   final List<Map<String, String>> _mensajes = [];
   final TextEditingController _mensajeController = TextEditingController();
+  final TextEditingController _diagnosticoController = TextEditingController();
   bool _chatLoading = false;
   bool _historiaCargada = false;
+  bool _guardandoDiagnostico = false;
 
   @override
   void initState() {
@@ -37,6 +39,7 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
   @override
   void dispose() {
     _mensajeController.dispose();
+    _diagnosticoController.dispose();
     super.dispose();
   }
 
@@ -172,6 +175,125 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
       setState(() {
         _chatLoading = false;
       });
+    }
+  }
+
+  Future<void> _mostrarDialogoDiagnostico() async {
+    if (_citaData == null) return;
+
+    final diagnosticoActual = (_citaData!['diagnostico'] ?? '')
+        .toString()
+        .trim();
+    _diagnosticoController.text = diagnosticoActual;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: !_guardandoDiagnostico,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(
+                diagnosticoActual.isEmpty
+                    ? 'Registrar diagnóstico'
+                    : 'Actualizar diagnóstico',
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: TextField(
+                  controller: _diagnosticoController,
+                  maxLines: 6,
+                  minLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Diagnóstico del paciente',
+                    hintText: 'Escribe los hallazgos y recomendaciones',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: _guardandoDiagnostico
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _guardandoDiagnostico
+                      ? null
+                      : () =>
+                            _guardarDiagnostico(dialogContext, setStateDialog),
+                  icon: _guardandoDiagnostico
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.save),
+                  label: Text(
+                    _guardandoDiagnostico ? 'Guardando...' : 'Guardar',
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[600],
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _guardarDiagnostico(
+    BuildContext dialogContext,
+    StateSetter setStateDialog,
+  ) async {
+    if (_citaData == null) return;
+
+    final texto = _diagnosticoController.text.trim();
+
+    setState(() {
+      _guardandoDiagnostico = true;
+    });
+    setStateDialog(() {});
+
+    final resultado = await SupabaseService.instance.actualizarDiagnosticoCita(
+      citaId: _citaData!['id'].toString(),
+      diagnostico: texto,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _guardandoDiagnostico = false;
+      if (resultado['success'] == true) {
+        _citaData!['diagnostico'] = texto.isEmpty ? null : texto;
+      }
+    });
+    setStateDialog(() {});
+
+    if (resultado['success'] == true) {
+      Navigator.of(dialogContext).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Diagnóstico guardado correctamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      final mensaje =
+          resultado['message'] ??
+          'No se pudo guardar el diagnóstico. Intenta de nuevo.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensaje), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -322,6 +444,8 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          _buildDiagnosticoCard(),
           if (_pacienteData != null) ...[
             const SizedBox(height: 16),
             Card(
@@ -381,6 +505,93 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDiagnosticoCard() {
+    final diagnostico = (_citaData?['diagnostico'] ?? '').toString().trim();
+    final tieneDiagnostico = diagnostico.isNotEmpty;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.assignment, color: Colors.blue[600]),
+                const SizedBox(width: 8),
+                const Text(
+                  'Diagnóstico del Paciente',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Esta información será visible para el paciente en su historial de citas.',
+              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton.icon(
+                onPressed: _guardandoDiagnostico
+                    ? null
+                    : _mostrarDialogoDiagnostico,
+                icon: Icon(tieneDiagnostico ? Icons.edit : Icons.note_add),
+                label: Text(
+                  tieneDiagnostico
+                      ? 'Editar diagnóstico'
+                      : 'Agregar diagnóstico',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[600],
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (tieneDiagnostico)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green[100] ?? Colors.green),
+                ),
+                child: Text(
+                  diagnostico,
+                  style: const TextStyle(fontSize: 15, height: 1.4),
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.grey[500]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Aún no has registrado un diagnóstico para esta cita.',
+                        style: TextStyle(color: Colors.grey[700], height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

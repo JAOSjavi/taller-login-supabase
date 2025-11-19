@@ -8,6 +8,7 @@ class CitaMedica {
   final String pdfUrl;
   final DateTime createdAt;
   final String? nombreCompletoPaciente; // Nombre completo del paciente
+  final String? diagnostico;
 
   CitaMedica({
     required this.id,
@@ -19,6 +20,7 @@ class CitaMedica {
     required this.pdfUrl,
     required this.createdAt,
     this.nombreCompletoPaciente,
+    this.diagnostico,
   });
 
   factory CitaMedica.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,7 @@ class CitaMedica {
         json['created_at'] ?? DateTime.now().toIso8601String(),
       ),
       nombreCompletoPaciente: nombreCompleto,
+      diagnostico: json['diagnostico']?.toString(),
     );
   }
 
@@ -57,6 +60,7 @@ class CitaMedica {
       'hora': hora,
       'pdf_url': pdfUrl,
       'created_at': createdAt.toIso8601String(),
+      'diagnostico': diagnostico,
     };
   }
 
