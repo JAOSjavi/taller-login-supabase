@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:get/get.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import '../services/supabase_service.dart';
+import '../controllers/theme_controller.dart';
 
 class AgendarCitaScreen extends StatefulWidget {
   const AgendarCitaScreen({super.key});
@@ -44,8 +46,14 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
+    final ThemeController themeController = Get.find<ThemeController>();
+    
+    return Obx(
+      () {
+        final isDark = themeController.isDarkMode.value;
+        
+        return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
       appBar: AppBar(
         title: const Text('Agendar Cita Médica'),
         backgroundColor: Colors.blue[600],
@@ -67,7 +75,7 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: isDark ? const Color(0xFF2A2A2A) : Colors.blue[50],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -75,7 +83,7 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                     Icon(
                       Icons.calendar_today,
                       size: 48,
-                      color: Colors.blue[600],
+                      color: Colors.blue[400],
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -83,13 +91,18 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue[800],
+                        color: isDark ? Colors.blue[300] : Colors.blue[800],
+                        fontFamily: 'Poppins',
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Complete todos los campos para agendar su cita',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDark ? Colors.white70 : Colors.grey[600],
+                        fontFamily: 'Poppins',
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -98,15 +111,16 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.blue[100],
+                        color: isDark ? Colors.blue[900] : Colors.blue[100],
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'Horarios de atención: 8:00 AM - 6:00 PM',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.blue[800],
+                          color: isDark ? Colors.blue[200] : Colors.blue[800],
                           fontWeight: FontWeight.w500,
+                          fontFamily: 'Poppins',
                         ),
                       ),
                     ),
@@ -124,9 +138,34 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                   prefixIcon: const Icon(Icons.medical_services),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.blue[400]!,
+                      width: 2,
+                    ),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: isDark ? const Color(0xFF2F2F2F) : Colors.white,
+                  labelStyle: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                dropdownColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontFamily: 'Poppins',
                 ),
                 items: _tiposCita.map((String tipo) {
                   return DropdownMenuItem<String>(
@@ -157,9 +196,34 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                   prefixIcon: const Icon(Icons.person),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.blue[400]!,
+                      width: 2,
+                    ),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: isDark ? const Color(0xFF2F2F2F) : Colors.white,
+                  labelStyle: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                dropdownColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontFamily: 'Poppins',
                 ),
                 items: _doctores.map((String doctor) {
                   return DropdownMenuItem<String>(
@@ -193,9 +257,33 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                         prefixIcon: const Icon(Icons.calendar_today),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.blue[400]!,
+                            width: 2,
+                          ),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: isDark ? const Color(0xFF2F2F2F) : Colors.white,
+                        labelStyle: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontFamily: 'Poppins',
                       ),
                       keyboardType: TextInputType.number,
                       onChanged: (value) => _dia = value,
@@ -219,9 +307,33 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                         labelText: 'Mes',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.blue[400]!,
+                            width: 2,
+                          ),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: isDark ? const Color(0xFF2F2F2F) : Colors.white,
+                        labelStyle: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontFamily: 'Poppins',
                       ),
                       keyboardType: TextInputType.number,
                       onChanged: (value) => _mes = value,
@@ -245,9 +357,33 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                         labelText: 'Año',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Colors.blue[400]!,
+                            width: 2,
+                          ),
                         ),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: isDark ? const Color(0xFF2F2F2F) : Colors.white,
+                        labelStyle: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontFamily: 'Poppins',
                       ),
                       keyboardType: TextInputType.number,
                       onChanged: (value) => _ano = value,
@@ -277,14 +413,37 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                     prefixIcon: const Icon(Icons.access_time),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0xFF444444) : Colors.grey[300]!,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: Colors.blue[400]!,
+                        width: 2,
+                      ),
                     ),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: isDark ? const Color(0xFF2F2F2F) : Colors.white,
+                    labelStyle: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black87,
+                      fontFamily: 'Poppins',
+                    ),
                   ),
                   child: Text(
                     _hora != null ? _hora!.format(context) : 'Seleccionar hora',
                     style: TextStyle(
-                      color: _hora != null ? Colors.black87 : Colors.grey[600],
+                      color: _hora != null
+                          ? (isDark ? Colors.white : Colors.black87)
+                          : (isDark ? Colors.white54 : Colors.grey[600]),
+                      fontFamily: 'Poppins',
                     ),
                   ),
                 ),
@@ -299,13 +458,13 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                   border: Border.all(
                     color: _nombreArchivo != null
                         ? Colors.green
-                        : Colors.grey[300]!,
+                        : (isDark ? const Color(0xFF444444) : Colors.grey[300]!),
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   color: _nombreArchivo != null
-                      ? Colors.green[50]
-                      : Colors.white,
+                      ? (isDark ? Colors.green[900] : Colors.green[50])
+                      : (isDark ? const Color(0xFF2F2F2F) : Colors.white),
                 ),
                 child: Column(
                   children: [
@@ -325,8 +484,9 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: _nombreArchivo != null
-                            ? Colors.green[700]
-                            : Colors.grey[700],
+                            ? (isDark ? Colors.green[300] : Colors.green[700])
+                            : (isDark ? Colors.white70 : Colors.grey[700]),
+                        fontFamily: 'Poppins',
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -402,6 +562,8 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
           ),
         ),
       ),
+        );
+      },
     );
   }
 

@@ -70,41 +70,46 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeController themeController = Get.find<ThemeController>();
+    
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: Colors.grey[50],
-        body: const Center(child: CircularProgressIndicator()),
+      return Obx(
+        () => Scaffold(
+          backgroundColor: themeController.isDarkMode.value
+              ? const Color(0xFF1E1E1E)
+              : Colors.grey[50],
+          body: const Center(child: CircularProgressIndicator()),
+        ),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bienvenido'),
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          GetBuilder<ThemeController>(
-            builder: (controller) => IconButton(
-              icon: Icon(
-                controller.isDarkMode.value
-                    ? Icons.light_mode
-                    : Icons.dark_mode,
+    return Obx(
+      () {
+        final isDark = themeController.isDarkMode.value;
+        
+        return Scaffold(
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+          appBar: AppBar(
+            title: const Text('Bienvenido'),
+            backgroundColor: Colors.blue[600],
+            foregroundColor: Colors.white,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: Icon(
+                  isDark ? Icons.light_mode : Icons.dark_mode,
+                ),
+                onPressed: () => themeController.toggleTheme(),
+                tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
               ),
-              onPressed: () => controller.toggleTheme(),
-              tooltip: controller.isDarkMode.value
-                  ? 'Modo claro'
-                  : 'Modo oscuro',
-            ),
+              IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: _cerrarSesion,
+                tooltip: 'Cerrar sesión',
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _cerrarSesion,
-            tooltip: 'Cerrar sesión',
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
+          body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -160,11 +165,11 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
+                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
                       blurRadius: 5,
                       offset: const Offset(0, 2),
                     ),
@@ -175,22 +180,23 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.person, color: Colors.blue[600], size: 20),
+                        Icon(Icons.person, color: Colors.blue[400], size: 20),
                         const SizedBox(width: 8),
                         Text(
                           'Información del Usuario',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue[800],
+                            color: isDark ? Colors.blue[300] : Colors.blue[800],
+                            fontFamily: 'Poppins',
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _buildInfoRow('Nombre completo', _usuario!.nombreCompleto),
-                    _buildInfoRow('Cédula', _usuario!.cedula),
-                    _buildInfoRow('EPS', _usuario!.eps),
+                    _buildInfoRow('Nombre completo', _usuario!.nombreCompleto, isDark),
+                    _buildInfoRow('Cédula', _usuario!.cedula, isDark),
+                    _buildInfoRow('EPS', _usuario!.eps, isDark),
                   ],
                 ),
               ),
@@ -261,11 +267,11 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
                     blurRadius: 5,
                     offset: const Offset(0, 2),
                   ),
@@ -278,7 +284,7 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
                     children: [
                       Icon(
                         Icons.info_outline,
-                        color: Colors.blue[600],
+                        color: Colors.blue[400],
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -287,26 +293,29 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue[800],
+                          color: isDark ? Colors.blue[300] : Colors.blue[800],
+                          fontFamily: 'Poppins',
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _buildFeatureItem('📅 Agendamiento de citas médicas'),
-                  _buildFeatureItem('👨‍⚕️ Selección de especialistas'),
-                  _buildFeatureItem('📄 Subida de historias clínicas'),
-                  _buildFeatureItem('🔒 Seguridad y privacidad garantizada'),
+                  _buildFeatureItem('📅 Agendamiento de citas médicas', isDark),
+                  _buildFeatureItem('👨‍⚕️ Selección de especialistas', isDark),
+                  _buildFeatureItem('📄 Subida de historias clínicas', isDark),
+                  _buildFeatureItem('🔒 Seguridad y privacidad garantizada', isDark),
                 ],
               ),
             ),
           ],
         ),
       ),
+        );
+      },
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -318,14 +327,19 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
               '$label:',
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[700],
+                color: isDark ? Colors.white70 : Colors.grey[700],
+                fontFamily: 'Poppins',
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+                fontFamily: 'Poppins',
+              ),
             ),
           ),
         ],
@@ -333,7 +347,7 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
     );
   }
 
-  Widget _buildFeatureItem(String text) {
+  Widget _buildFeatureItem(String text, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -342,7 +356,11 @@ class _BienvenidaScreenState extends State<BienvenidaScreen> {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(color: Colors.grey[700], fontSize: 14),
+              style: TextStyle(
+                color: isDark ? Colors.white70 : Colors.grey[700],
+                fontSize: 14,
+                fontFamily: 'Poppins',
+              ),
             ),
           ),
         ],
