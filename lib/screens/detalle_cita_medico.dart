@@ -331,68 +331,13 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
           : _citaData == null
           ? const Center(child: Text('No se encontraron datos'))
           : DefaultTabController(
-              length: 2,
+              length: 3,
               child: Column(
                 children: [
-                  // Información del paciente y cita
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    color: Colors.blue[50],
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (_pacienteData != null) ...[
-                          Text(
-                            'Paciente: ${_pacienteData!['nombres'] ?? ''} ${_pacienteData!['apellidos'] ?? ''}',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Cédula: ${_pacienteData!['cedula'] ?? 'N/A'}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                          Text(
-                            'EPS: ${_pacienteData!['eps'] ?? 'N/A'}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 16),
-                        Text(
-                          'Tipo de cita: ${_citaData!['tipo_cita'] ?? 'N/A'}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          'Fecha: ${_formatearFecha(_citaData!['fecha'])}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                        Text(
-                          'Hora: ${_citaData!['hora'] ?? 'N/A'}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   const TabBar(
                     tabs: [
                       Tab(icon: Icon(Icons.info), text: 'Información'),
+                      Tab(icon: Icon(Icons.assignment), text: 'Diagnóstico'),
                       Tab(icon: Icon(Icons.chat), text: 'Chatbot IA'),
                     ],
                   ),
@@ -401,6 +346,8 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                       children: [
                         // Tab de información
                         _buildInfoTab(),
+                        // Diagnóstico
+                        _buildDiagnosticoTab(),
                         // Tab de chatbot
                         _buildChatTab(),
                       ],
@@ -444,8 +391,6 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          _buildDiagnosticoCard(),
           if (_pacienteData != null) ...[
             const SizedBox(height: 16),
             Card(
@@ -786,6 +731,16 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDiagnosticoTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [_buildDiagnosticoCard()],
+      ),
     );
   }
 

@@ -9,6 +9,7 @@ import 'screens/medico_panel.dart';
 import 'screens/doctor_panel_screen.dart';
 import 'screens/detalle_cita_medico.dart';
 import 'services/supabase_service.dart';
+import 'services/session_service.dart';
 
 class AppRouter {
   static final GoRouter _router = GoRouter(
@@ -68,8 +69,12 @@ class AppRouter {
     ],
     redirect: (context, state) {
       final isLoggedIn = SupabaseService.instance.isLoggedIn;
-      final isLoginRoute = state.matchedLocation == '/login';
-      final isRegistroRoute = state.matchedLocation == '/registro';
+      final isSuperUser = SessionService.instance.isSuperUser;
+      final location = state.matchedLocation;
+      final isLoginRoute = location == '/login';
+      final isRegistroRoute = location == '/registro';
+      final isBienvenidaRoute = location == '/bienvenida';
+      final isMedicoPanelRoute = location == '/medico-panel';
 
       // Si no está logueado y no está en login o registro, redirigir a login
       if (!isLoggedIn && !isLoginRoute && !isRegistroRoute) {
@@ -78,7 +83,12 @@ class AppRouter {
 
       // Si está logueado y está en login o registro, redirigir a bienvenida
       if (isLoggedIn && (isLoginRoute || isRegistroRoute)) {
-        return '/bienvenida';
+        return isSuperUser ? '/medico-panel' : '/bienvenida';
+      }
+
+      // Forzar ruta del panel del médico si es superusuario
+      if (isLoggedIn && isSuperUser && !isMedicoPanelRoute && isBienvenidaRoute) {
+        return '/medico-panel';
       }
 
       return null;
