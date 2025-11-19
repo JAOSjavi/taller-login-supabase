@@ -41,10 +41,16 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
           useMaterial3: true,
+          fontFamily: 'Poppins',
           appBarTheme: AppBarTheme(
             backgroundColor: Colors.blue[600],
             foregroundColor: Colors.white,
             elevation: 0,
+            titleTextStyle: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
@@ -55,6 +61,23 @@ class MyApp extends StatelessWidget {
           ),
           inputDecorationTheme: InputDecorationTheme(
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          textTheme: const TextTheme(
+            displayLarge: TextStyle(fontFamily: 'Poppins'),
+            displayMedium: TextStyle(fontFamily: 'Poppins'),
+            displaySmall: TextStyle(fontFamily: 'Poppins'),
+            headlineLarge: TextStyle(fontFamily: 'Poppins'),
+            headlineMedium: TextStyle(fontFamily: 'Poppins'),
+            headlineSmall: TextStyle(fontFamily: 'Poppins'),
+            titleLarge: TextStyle(fontFamily: 'Poppins'),
+            titleMedium: TextStyle(fontFamily: 'Poppins'),
+            titleSmall: TextStyle(fontFamily: 'Poppins'),
+            bodyLarge: TextStyle(fontFamily: 'Poppins'),
+            bodyMedium: TextStyle(fontFamily: 'Poppins'),
+            bodySmall: TextStyle(fontFamily: 'Poppins'),
+            labelLarge: TextStyle(fontFamily: 'Poppins'),
+            labelMedium: TextStyle(fontFamily: 'Poppins'),
+            labelSmall: TextStyle(fontFamily: 'Poppins'),
           ),
         ),
         darkTheme: ThemeData(
@@ -69,6 +92,7 @@ class MyApp extends StatelessWidget {
                 secondary: Colors.blueGrey[100],
               ),
           useMaterial3: true,
+          fontFamily: 'Poppins',
           scaffoldBackgroundColor: const Color(0xFF1E1E1E),
           cardColor: const Color(0xFF2A2A2A),
           dialogBackgroundColor: const Color(0xFF2A2A2A),
@@ -76,6 +100,11 @@ class MyApp extends StatelessWidget {
             backgroundColor: Color(0xFF2C2C2C),
             foregroundColor: Colors.white,
             elevation: 0,
+            titleTextStyle: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
@@ -101,8 +130,31 @@ class MyApp extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Colors.blueGrey),
             ),
-            labelStyle: const TextStyle(color: Colors.white70),
-            hintStyle: const TextStyle(color: Colors.white54),
+            labelStyle: const TextStyle(
+              color: Colors.white70,
+              fontFamily: 'Poppins',
+            ),
+            hintStyle: const TextStyle(
+              color: Colors.white54,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          textTheme: const TextTheme(
+            displayLarge: TextStyle(fontFamily: 'Poppins'),
+            displayMedium: TextStyle(fontFamily: 'Poppins'),
+            displaySmall: TextStyle(fontFamily: 'Poppins'),
+            headlineLarge: TextStyle(fontFamily: 'Poppins'),
+            headlineMedium: TextStyle(fontFamily: 'Poppins'),
+            headlineSmall: TextStyle(fontFamily: 'Poppins'),
+            titleLarge: TextStyle(fontFamily: 'Poppins'),
+            titleMedium: TextStyle(fontFamily: 'Poppins'),
+            titleSmall: TextStyle(fontFamily: 'Poppins'),
+            bodyLarge: TextStyle(fontFamily: 'Poppins'),
+            bodyMedium: TextStyle(fontFamily: 'Poppins'),
+            bodySmall: TextStyle(fontFamily: 'Poppins'),
+            labelLarge: TextStyle(fontFamily: 'Poppins'),
+            labelMedium: TextStyle(fontFamily: 'Poppins'),
+            labelSmall: TextStyle(fontFamily: 'Poppins'),
           ),
         ),
         themeMode: themeController.isDarkMode.value

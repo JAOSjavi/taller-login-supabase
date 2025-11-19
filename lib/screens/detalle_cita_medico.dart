@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'dart:async';
 import '../services/supabase_service.dart';
 import '../services/gemini_service.dart';
 
@@ -29,6 +31,11 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
   bool _chatLoading = false;
   bool _historiaCargada = false;
   bool _guardandoDiagnostico = false;
+  
+  // Estado para animación de escritura
+  String _textoAnimado = '';
+  Timer? _typingTimer;
+  bool _estaEscribiendo = false;
 
   @override
   void initState() {
@@ -40,6 +47,7 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
   void dispose() {
     _mensajeController.dispose();
     _diagnosticoController.dispose();
+    _typingTimer?.cancel();
     super.dispose();
   }
 
@@ -161,21 +169,45 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
         mensaje,
       );
 
-      setState(() {
-        _mensajes.add({'tipo': 'asistente', 'mensaje': respuesta});
-      });
+      // Iniciar animación de escritura
+      _iniciarAnimacionEscritura(respuesta);
     } catch (e) {
       setState(() {
         _mensajes.add({
           'tipo': 'error',
           'mensaje': 'Error al procesar la pregunta: ${e.toString()}',
         });
-      });
-    } finally {
-      setState(() {
         _chatLoading = false;
       });
     }
+  }
+
+  /// Inicia la animación de escritura para una respuesta
+  void _iniciarAnimacionEscritura(String respuestaCompleta) {
+    _typingTimer?.cancel();
+    _textoAnimado = '';
+    _estaEscribiendo = true;
+    
+    // Agregar mensaje vacío que se llenará con la animación
+    final indexMensaje = _mensajes.length;
+    _mensajes.add({'tipo': 'asistente', 'mensaje': ''});
+    
+    int indice = 0;
+    _typingTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+      if (indice < respuestaCompleta.length) {
+        setState(() {
+          _textoAnimado = respuestaCompleta.substring(0, indice + 1);
+          _mensajes[indexMensaje]['mensaje'] = _textoAnimado;
+        });
+        indice++;
+      } else {
+        timer.cancel();
+        setState(() {
+          _estaEscribiendo = false;
+          _chatLoading = false;
+        });
+      }
+    });
   }
 
   Future<void> _mostrarDialogoDiagnostico() async {
@@ -712,20 +744,85 @@ class _DetalleCitaMedicoScreenState extends State<DetalleCitaMedicoScreen> {
                         constraints: BoxConstraints(
                           maxWidth: MediaQuery.of(context).size.width * 0.75,
                         ),
-                        child: Text(
-                          mensaje['mensaje'] ?? '',
-                          style: TextStyle(
-                            color: isUsuario || isError
-                                ? Colors.white
-                                : (isDark ? Colors.white : Colors.black87),
-                          ),
-                        ),
+                        child: isUsuario || isError
+                            ? Text(
+                                mensaje['mensaje'] ?? '',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Poppins',
+                                ),
+                              )
+                            : MarkdownBody(
+                                data: mensaje['mensaje'] ?? '',
+                                styleSheet: MarkdownStyleSheet(
+                                  p: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 14,
+                                  ),
+                                  h1: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  h2: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  h3: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  strong: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  em: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  code: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
+                                  ),
+                                  codeblockDecoration: BoxDecoration(
+                                    color: isDark ? Colors.grey[800] : Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  listBullet: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                  blockquote: TextStyle(
+                                    color: isDark ? Colors.white : Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  blockquoteDecoration: BoxDecoration(
+                                    color: isDark ? Colors.blue[900] : Colors.blue[50],
+                                    border: Border(
+                                      left: BorderSide(
+                                        color: Colors.blue[400]!,
+                                        width: 4,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                       ),
                     );
                   },
                 ),
         ),
-        if (_chatLoading && _mensajes.isNotEmpty)
+        if (_chatLoading && _mensajes.isNotEmpty && !_estaEscribiendo)
           const Padding(
             padding: EdgeInsets.all(8.0),
             child: LinearProgressIndicator(),

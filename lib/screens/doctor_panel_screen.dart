@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'dart:async';
 import '../services/supabase_service.dart';
 import '../services/ai_chat_service.dart';
 
@@ -33,6 +35,11 @@ class _DoctorPanelScreenState extends State<DoctorPanelScreen> {
   bool _pdfCargadoParaChat = false;
   String? _pdfBase64;
 
+  // Estado para animación de escritura
+  String _textoAnimado = '';
+  Timer? _typingTimer;
+  bool _estaEscribiendo = false;
+
   // Controlador del visor PDF
   PdfViewerController? _pdfViewController;
 
@@ -48,6 +55,7 @@ class _DoctorPanelScreenState extends State<DoctorPanelScreen> {
   void dispose() {
     _mensajeController.dispose();
     _pdfViewController?.dispose();
+    _typingTimer?.cancel();
     super.dispose();
   }
 
@@ -136,9 +144,8 @@ class _DoctorPanelScreenState extends State<DoctorPanelScreen> {
         userQuery: mensaje,
       );
 
-      setState(() {
-        _mensajesChat.add({'tipo': 'asistente', 'mensaje': respuesta});
-      });
+      // Iniciar animación de escritura
+      _iniciarAnimacionEscritura(respuesta);
     } catch (e) {
       // Mensaje de error más amigable
       String mensajeError = 'Error al procesar la pregunta';
@@ -162,12 +169,37 @@ class _DoctorPanelScreenState extends State<DoctorPanelScreen> {
 
       setState(() {
         _mensajesChat.add({'tipo': 'error', 'mensaje': mensajeError});
-      });
-    } finally {
-      setState(() {
         _cargandoChat = false;
       });
     }
+  }
+
+  /// Inicia la animación de escritura para una respuesta
+  void _iniciarAnimacionEscritura(String respuestaCompleta) {
+    _typingTimer?.cancel();
+    _textoAnimado = '';
+    _estaEscribiendo = true;
+
+    // Agregar mensaje vacío que se llenará con la animación
+    final indexMensaje = _mensajesChat.length;
+    _mensajesChat.add({'tipo': 'asistente', 'mensaje': ''});
+
+    int indice = 0;
+    _typingTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+      if (indice < respuestaCompleta.length) {
+        setState(() {
+          _textoAnimado = respuestaCompleta.substring(0, indice + 1);
+          _mensajesChat[indexMensaje]['mensaje'] = _textoAnimado;
+        });
+        indice++;
+      } else {
+        timer.cancel();
+        setState(() {
+          _estaEscribiendo = false;
+          _cargandoChat = false;
+        });
+      }
+    });
   }
 
   /// Selecciona una cita y carga su PDF
@@ -645,22 +677,87 @@ class _DoctorPanelScreenState extends State<DoctorPanelScreen> {
                         constraints: BoxConstraints(
                           maxWidth: MediaQuery.of(context).size.width * 0.6,
                         ),
-                        child: Text(
-                          mensaje['mensaje'] ?? '',
-                          style: TextStyle(
-                            color: isUsuario || isError
-                                ? Colors.white
-                                : Colors.black87,
-                          ),
-                        ),
+                        child: isUsuario || isError
+                            ? Text(
+                                mensaje['mensaje'] ?? '',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Poppins',
+                                ),
+                              )
+                            : MarkdownBody(
+                                data: mensaje['mensaje'] ?? '',
+                                styleSheet: MarkdownStyleSheet(
+                                  p: TextStyle(
+                                    color: Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 14,
+                                  ),
+                                  h1: TextStyle(
+                                    color: Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  h2: TextStyle(
+                                    color: Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  h3: TextStyle(
+                                    color: Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  strong: TextStyle(
+                                    color: Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  em: TextStyle(
+                                    color: Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  code: TextStyle(
+                                    color: Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    backgroundColor: Colors.grey[300],
+                                  ),
+                                  codeblockDecoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  listBullet: TextStyle(
+                                    color: Colors.black87,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                  blockquote: TextStyle(
+                                    color: Colors.black87,
+                                    fontFamily: 'Poppins',
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  blockquoteDecoration: BoxDecoration(
+                                    color: Colors.blue[50],
+                                    border: Border(
+                                      left: BorderSide(
+                                        color: Colors.blue[400]!,
+                                        width: 4,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                       ),
                     );
                   },
                 ),
         ),
 
-        // Indicador de carga
-        if (_cargandoChat)
+        // Indicador de carga (solo cuando no está escribiendo)
+        if (_cargandoChat && !_estaEscribiendo)
           const Padding(
             padding: EdgeInsets.all(8.0),
             child: LinearProgressIndicator(),
