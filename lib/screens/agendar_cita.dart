@@ -6,7 +6,6 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
 import '../services/supabase_service.dart';
 import '../controllers/theme_controller.dart';
 
@@ -508,19 +507,6 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    ElevatedButton.icon(
-                      onPressed: _seleccionarEjemplo,
-                      icon: const Icon(Icons.library_books),
-                      label: const Text('Elegir historia de ejemplo'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal[600],
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -805,103 +791,6 @@ class _AgendarCitaScreenState extends State<AgendarCitaScreen> {
     }
   }
 
-  Future<void> _seleccionarEjemplo() async {
-    try {
-      final opcion = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Historias clínicas de ejemplo'),
-          content: const Text('Seleccione una historia clínica de ejemplo'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop('historia1'),
-              child: const Text('Historia clínica 1'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop('historia2'),
-              child: const Text('Historia clínica 2'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop('historia3'),
-              child: const Text('Historia clínica 3'),
-            ),
-          ],
-        ),
-      );
-
-      if (opcion != null) {
-        await _cargarEjemplo(opcion);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al seleccionar ejemplo: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _cargarEjemplo(String id) async {
-    final urls = {
-      'historia1':
-          'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-      'historia2':
-          'https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf',
-      'historia3': 'https://gahp.net/wp-content/uploads/2017/09/sample.pdf',
-    };
-    final nombres = {
-      'historia1': 'historia_clinica_1.pdf',
-      'historia2': 'historia_clinica_2.pdf',
-      'historia3': 'historia_clinica_3.pdf',
-    };
-
-    final url = urls[id];
-    final nombre = nombres[id];
-    if (url == null || nombre == null) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final resp = await http.get(Uri.parse(url));
-      if (resp.statusCode == 200) {
-        setState(() {
-          _archivoBytes = resp.bodyBytes;
-          _archivoPDF = null;
-          _nombreArchivo = nombre;
-        });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Historia clínica de ejemplo seleccionada'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        throw Exception('No se pudo descargar el ejemplo (${resp.statusCode})');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al cargar ejemplo: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
   Future<void> _confirmarCita() async {
     final formState = _formKey.currentState;
